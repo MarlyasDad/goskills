@@ -1,10 +1,21 @@
 # goskills
 
-Пустой каталог
-→ Пользователь копирует skills/
-→ Пользователь: «Создай Go-проект с core+adapters и table-driven тестами»
-→ Агент: go mod init <module>
-→ Агент: читает skills/project-structure → создаёт core/, adapters/, cmd/
-→ Агент: читает skills/testing → генерирует примеры кода и тесты
-→ Агент: читает skills/agents-md → генерирует AGENTS.md
-→ Пользователь проверяет и коммитит
+## Подключение к проекту
+
+### git clone
+- клонируйте этот репозиторий в любой каталог на вашем ПК
+- подключите к вашей среде разработки на примере OpenCode и macOS. 
+  Отредактируйте файл ~/.config/opencode/opencode.jsonc следующим образом:
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": [
+    "~/.config/opencode/skills",
+    "~/Documents/GitHub/goskills/skills/"
+  ]
+}
+```
+- скиллы, подключенные через opencode.json, новый проект увидит автоматически. 
+  OpenCode каждый раз сам обходит каталоги и показывает агенту список доступных навыков, 
+  а агент уже решает, какой из них загрузить.
+- обновление версии через `git pull`
