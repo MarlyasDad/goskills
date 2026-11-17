@@ -1,4 +1,5 @@
 ## 2026-11-18
+- bootstrap: добавлена настройка локальных имени и email разработчика при создании проекта, README (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: уточнено определение версии Go при создании проекта — bootstrap, project-structure, README (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: добавлен навык создания каркаса Go-проекта с нуля (Alexander Yudaev <yudaev.alex@gmail.com>)
 - README: добавлен шаг создания проекта после подключения навыков (Alexander Yudaev <yudaev.alex@gmail.com>)

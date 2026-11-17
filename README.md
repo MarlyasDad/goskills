@@ -27,14 +27,17 @@ OpenCode и попросите агента собрать каркас:
 
 > Создай каркас Go-проекта по навыку `bootstrap`.
 > Имя модуля: `github.com/org/repo`, имя приложения: `api`, версия Go: `1.26`.
+> Разработчик: `Alexander Yudaev <yudaev.alex@gmail.com>`.
 
 Версию Go можно не указывать — тогда агент возьмёт системную из `go version`
-или уточнит её, если она ниже `1.26`.
+или уточнит её, если она ниже `1.26`. Имя и email разработчика агент запишет
+в локальный git-конфиг проекта (`.git/config`), не меняя глобальный.
 
 Агент загрузит `bootstrap`, `project-structure`, `architecture`, `testing` и
 создаст минимальный работающий каркас:
 
 - `go.mod` — имя модуля и версия Go;
+- локальный git-конфиг с именем и email разработчика;
 - `cmd/<appname>/main.go` — точка входа и graceful shutdown;
 - `internal/app/<appname>/app.go` — прикладной слой;
 - `internal/config/<appname>/config.go` — конфиг приложения;
