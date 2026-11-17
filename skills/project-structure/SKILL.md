@@ -287,6 +287,8 @@ go mod init <module>
 - `internal/infra/postgres/`, `internal/infra/redis/` — работа с БД и кэшем.
 - `internal/platform/metrics/`, `internal/platform/shutdown/` — метрики и
   graceful shutdown.
+- `internal/testkit/` — общие тестовые двойники, контрактные наборы и
+  хелперы; прод-код его не импортирует.
 - `migrations/` — SQL-миграции.
 - `docs/` — ADR, схемы, описание проекта.
 - `docker-compose.yml` — локальная инфраструктура для разработки и тестов.
