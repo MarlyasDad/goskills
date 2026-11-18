@@ -1,5 +1,5 @@
 ## 2026-11-18
-- architecture: в словарь добавлено различие доменного и прикладного сервиса (Alexander Yudaev <yudaev.alex@gmail.com>)
+- architecture: в словаре разделены composition root (app.go) и прикладной сервис/use case (остальные файлы app) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - repo: закреплено правило писать текст для человека и агента — простые формулировки, расшифровка терминов (AGENTS.md, skill-creator, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлены краткая формулировка и словарь терминов, уточнён composition root и роль cmd (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: уточнены vertical slice, modular monolith и CQRS/event sourcing, примеры приведены к Go (Alexander Yudaev <yudaev.alex@gmail.com>)
