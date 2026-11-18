@@ -46,7 +46,8 @@ OpenCode и попросите агента собрать каркас:
 - локальный git-конфиг с именем и email разработчика;
 - `cmd/<appname>/main.go` — точка входа и graceful shutdown;
 - `internal/app/<appname>/app.go` — прикладной слой;
-- `internal/config/<appname>/config.go` — конфиг приложения;
+- `internal/platform/config/<appname>/config.go` — сборка конфига приложения
+  из локальных конфигов;
 - `internal/platform/config/`, `internal/platform/logger/` — примитивы;
 - `config/.env.example` — шаблон переменных окружения;
 - `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`;

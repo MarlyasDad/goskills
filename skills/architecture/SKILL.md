@@ -25,7 +25,8 @@ metadata:
 - `domain` не знает ни о чём, кроме себя.
 - `app` не знает, откуда пришёл вызов и куда уйдут данные.
 - `infra` и `transport` не знают друг о друге.
-- `cmd` — единственное место, где слои встречаются.
+- `cmd` — единственное место, где слои встречаются. Исключение — сборка
+  `platform/config/<appname>`: она импортирует только `Config` адаптеров.
 
 ## Карта слоёв
 
@@ -38,7 +39,7 @@ metadata:
 | Исходящие адаптеры | `internal/infra/<adapter>` | клиенты БД, HTTP, gRPC, Kafka, MinIO |
 | Входящие адаптеры | `internal/transport/<appname>` | HTTP, gRPC, Kafka, WebSocket |
 | Платформа | `internal/platform/<pkg>` | config, logger, tracing, metrics |
-| Конфиг | `internal/config/<appname>` | схема и валидация настроек |
+| Конфиг | `internal/platform/config/<appname>` | сборка конфига приложения из локальных конфигов |
 | Общее | `internal/shared` | общие прикладные типы |
 | Сборка | `cmd/<appname>` | wiring и запуск |
 
@@ -49,13 +50,13 @@ metadata:
 | `internal/domain` | stdlib, чистые библиотеки типов (`uuid`, `decimal`) | всё остальное, включая `platform` и `shared` |
 | `internal/services` | `domain`, `repository` | `app`, `infra`, `transport`, `platform`, `cmd` |
 | `internal/repository` | `domain`, stdlib (`context`) | `services`, `app`, `infra`, `transport`, `platform`, `cmd` |
-| `internal/app/<appname>` | `domain`, `services`, `repository`, `shared` | `infra`, `transport`, `config`, `platform`, `cmd`, `app/<other>` |
-| `internal/infra/<adapter>` | `domain`, `repository`, `platform`, сторонние клиенты | `app`, `services`, `transport`, `config`, `cmd` |
-| `internal/transport/<appname>` | `app/<appname>`, `domain`, `shared`, `platform` | `infra`, `repository`, `services`, `config`, `cmd`, `app/<other>` |
-| `internal/platform/<pkg>` | stdlib, сторонние библиотеки | любые пакеты проекта |
-| `internal/config/<appname>` | `platform/config`, stdlib | домен и остальные слои |
+| `internal/app/<appname>` | `domain`, `services`, `repository`, `shared` | `infra`, `transport`, `platform`, `cmd`, `app/<other>` |
+| `internal/infra/<adapter>` | `domain`, `repository`, `platform`, сторонние клиенты | `app`, `services`, `transport`, `platform/config/<appname>`, `cmd` |
+| `internal/transport/<appname>` | `app/<appname>`, `domain`, `shared`, `platform` | `infra`, `repository`, `services`, `platform/config/<appname>`, `cmd`, `app/<other>` |
+| `internal/platform/<pkg>` | stdlib, сторонние библиотеки | любые пакеты проекта (кроме `platform/config/<appname>`) |
+| `internal/platform/config/<appname>` | `platform/config`, `infra/<adapter>` (только `Config` и `LoadConfig`), stdlib | `domain`, `services`, `app`, `repository`, `transport`, `cmd`, конфиги других приложений |
 | `internal/shared` | `domain` | `app`, `services`, `repository`, `infra`, `transport`, `platform`, `cmd` |
-| `cmd/<appname>` | всё, что нужно для сборки | `cmd/<other>`, `app/<other>`, `config/<other>`, `transport/<other>` |
+| `cmd/<appname>` | всё, что нужно для сборки | `cmd/<other>`, `app/<other>`, `platform/config/<other>`, `transport/<other>` |
 
 «Чистые библиотеки» в `domain` — только типы без I/O: `uuid`, `decimal`,
 `time`. `net/http`, `database/sql`, ORM, логгеры и клиенты — запрещены.
@@ -92,8 +93,10 @@ metadata:
 
 - `domain`, `repository`, `platform` и сторонние клиенты.
 - Реализует порты `repository` и исходящие порты, объявленные потребителем.
-- Настройки адаптера приходят аргументами конструктора. `infra` не импортирует
-  `config/<appname>`: маппинг «конфиг → настройки адаптера» делает `cmd`.
+- Локальный `Config` адаптера живёт в его пакете (`config.go`): поля,
+  env-теги, дефолты и валидация. Настройки приходят аргументом конструктора.
+- `infra` не импортирует `platform/config/<appname>`: сборка конфига
+  приложения импортирует локальный `Config` адаптера, а не наоборот.
 - Для проверки контракта: `var _ repository.OrderRepository = (*Repo)(nil)`.
 
 ### transport/<appname>
@@ -109,12 +112,17 @@ metadata:
 - Не импортирует пакеты проекта: иначе платформа потянет за собой домен и
   станет вторым ядром.
 - Может использоваться адаптерами и `cmd`; `domain` и `shared` — нет.
+- Исключение — `platform/config/<appname>`: это сборка конфига приложения,
+  ей разрешено импортировать локальные `Config` адаптеров.
 
-### config/<appname>
+### platform/config/<appname>
 
-- `platform/config` и stdlib.
-- Содержит структуру настроек и валидацию, но не создаёт клиентов и не
-  содержит бизнес-логики.
+- Импортирует `platform/config` и пакеты адаптеров ради их `Config` и
+  `LoadConfig`; реализации адаптеров не вызывает.
+- Собирает `Config` приложения композицией: вкладывает `postgres.Config`,
+  `kafka.Config` и т.п. Поля локальных конфигов не дублирует.
+- Содержит `Load() (*Config, error)` и маппинг «локальный конфиг →
+  аргумент конструктора»; клиентов не создаёт и бизнес-логики не содержит.
 - Импортируется только из `cmd/<appname>`.
 
 ### shared
@@ -125,9 +133,11 @@ metadata:
 
 ### cmd/<appname>
 
-- Импортирует всё, что нужно собрать: `config/<appname>`, `platform/*`,
-  `infra/*`, `transport/<appname>`, `app/<appname>`.
+- Импортирует всё, что нужно собрать: `platform/config/<appname>`,
+  `platform/*`, `infra/*`, `transport/<appname>`, `app/<appname>`.
 - Единственное место, где конкретная реализация встречается с интерфейсом.
+  Конфиг приходит из `platform/config/<appname>` уже собранным; `cmd`
+  передаёт его части в конструкторы.
 - Не содержит бизнес-логики и не импортирует чужие приложения.
 
 ## Порты и интерфейсы
@@ -143,9 +153,11 @@ metadata:
 ## Несколько приложений в одном модуле
 
 - `app/<a>` не импортирует `app/<b>`; `transport/<a>` — `transport/<b>`;
-  `config/<a>` не используется в `<b>`; `cmd/<a>` собирает только `<a>`.
+  `platform/config/<a>` не используется в `<b>`; `cmd/<a>` собирает только `<a>`.
 - Общий код приложений живёт в `domain`, `services`, `repository`, `infra`,
   `platform`, `shared`. Дублирование между `app/` — ошибка.
+- Локальные конфиги адаптеров общие: `postgres.Config` не копируется в
+  `platform/config/<a>` и `platform/config/<b>`, а вкладывается в обе сборки.
 - Если двум приложениям нужен один сценарий — это доменный сервис или общий
   пакет `app`-уровня, а не импорт чужого приложения.
 
@@ -162,7 +174,8 @@ metadata:
 | `shared` импортирует `infra` | свалка и обратная стрелка | тип переносится в `infra` |
 | `repository` импортирует `infra` | цикл порта и реализации | интерфейс отдельно, реализация в `infra` |
 | `services` импортирует `app` | обратная стрелка | `app` вызывает `services` |
-| `infra` импортирует `config/<appname>` | адаптер зависит от схемы приложения | настройки аргументами, маппинг в `cmd` |
+| `infra` импортирует `platform/config/<appname>` | адаптер зависит от схемы приложения | настройки аргументами, `Config` адаптера в его пакете |
+| сборка конфига дублирует поля адаптера | одно поле в двух местах рассинхронизируется | вложить `postgres.Config` в `Config` приложения |
 
 ## Что не является нарушением
 
@@ -170,6 +183,8 @@ metadata:
 - Тесты в `tests/` и `_test.go` могут импортировать что угодно: интеграционный
   тест вправе поднять адаптер напрямую.
 - `platform` импортирует сторонние библиотеки — это её смысл.
+- `platform/config/<appname>` импортирует `Config` адаптеров: это сборка
+  конфига, а не сам адаптер.
 - `infra` импортирует `repository` ради проверки контракта
   (`var _ repository.X = ...`).
 
@@ -197,8 +212,10 @@ go list -f '{{.ImportPath}}: {{join .Imports " "}}' ./... | grep 'internal/infra
    `repository → infra`?
 4. Нет ли обхода слоя: `transport → repository`, `cmd → бизнес-логика`?
 5. Новый порт объявлен у потребителя, а не у реализации?
-6. Не появился ли общий код между приложениями через `app/` или `config/`?
-7. Не тянет ли `platform` пакеты проекта?
+6. Не появился ли общий код между приложениями через `app/` или
+   `platform/config/`?
+7. Не тянет ли `platform` пакеты проекта, кроме сборки
+   `platform/config/<appname>`?
 
 ## Границы с project-structure
 

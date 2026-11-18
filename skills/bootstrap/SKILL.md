@@ -31,7 +31,7 @@ metadata:
 | Что | Как определить |
 |---|---|
 | Имя модуля | Путь импорта (`module`), не имя проекта. Кандидат — из git remote: `git@github.com:org/repo.git` → `github.com/org/repo`. Спросить, будет ли проект импортироваться другими; если нет — предложить короткое имя и получить явное согласие. Без remote — `go.work` или родительский `go.mod`; иначе **спросить пользователя** |
-| Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/`, `internal/config/` |
+| Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/`, `internal/platform/config/` |
 | Версия Go | явно указанная пользователем; иначе `.go-version`, `toolchain` или CI-конфиг; иначе системная из `go version`. Если системная ниже `1.26` — уточнить у пользователя |
 | Данные разработчика | имя и email для локального git-конфига. Спросить вместе с остальными данными; если пользователь не указал — показать текущие `git config user.name` и `git config user.email` и подтвердить |
 
@@ -78,13 +78,12 @@ metadata:
     ├── app/
     │   └── <appname>/
     │       └── app.go
-    ├── config/
-    │   └── <appname>/
-    │       ├── config.go
-    │       └── config_test.go
     └── platform/
         ├── config/
-        │   └── env.go
+        │   ├── env.go
+        │   └── <appname>/
+        │       ├── config.go
+        │       └── config_test.go
         └── logger/
             └── logger.go
 ```
@@ -116,9 +115,11 @@ metadata:
    При коротком имени модуля — записать причину выбора в `README.md`.
 4. **Платформа.** `internal/platform/config/env.go` — чтение env;
    `internal/platform/logger/logger.go` — создание логгера.
-5. **Конфиг приложения.** `internal/config/<appname>/config.go` — структура,
-   `Load()`, валидация; `config_test.go` — дефолты и ошибка на неверном
-   значении.
+5. **Конфиг приложения.** `internal/platform/config/<appname>/config.go` —
+   сборка конфига из локальных конфигов; пока адаптеров нет — `Env` и
+   `ShutdownTimeout`. `config_test.go` — дефолты и ошибка на неверном
+   значении. Локальный `Config` адаптера живёт в пакете адаптера и
+   вкладывается в сборку, а не дублируется.
 6. **Приложение.** `internal/app/<appname>/app.go` — точка сборки сценариев.
    Пока сценариев нет — минимальный `App` с `Run(ctx)`.
 7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → приложение →
@@ -203,7 +204,7 @@ func New(env string) *slog.Logger {
 }
 ```
 
-### internal/config/<appname>/config.go
+### internal/platform/config/<appname>/config.go
 
 ```go
 package <appname>
@@ -238,7 +239,7 @@ func Load() (*Config, error) {
 }
 ```
 
-### internal/config/<appname>/config_test.go
+### internal/platform/config/<appname>/config_test.go
 
 ```go
 package <appname>
@@ -307,7 +308,7 @@ import (
 	"syscall"
 
 	"<module>/internal/app/<appname>"
-	appconfig "<module>/internal/config/<appname>"
+	appconfig "<module>/internal/platform/config/<appname>"
 	"<module>/internal/platform/logger"
 )
 
@@ -415,7 +416,8 @@ make build
 - `go.mod` содержит только `module` и `go`, без зависимостей.
 - `go build` создаёт бинарь, `make run` запускается и завершается по Ctrl+C.
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
-- `internal/platform` не импортирует пакеты проекта.
+- `internal/platform` не импортирует пакеты проекта, кроме сборки
+  `internal/platform/config/<appname>` (локальные `Config` адаптеров).
 - `internal/domain` и другие слои отсутствуют, пока в них нет файлов.
 - В `.git/config` записаны имя и email разработчика, глобальный конфиг не
   изменён.
@@ -428,6 +430,8 @@ make build
 - Не создавать `internal/domain`, `internal/services`, `internal/repository`,
   `internal/infra`, `internal/transport`, `tests/`, `api/` без первого файла.
 - Не добавлять сторонние зависимости в `go.mod` на старте: только stdlib.
+- Не дублировать настройки адаптеров в конфиге приложения: вкладывать
+  локальный `Config` (`postgres.Config` и т.п.).
 - Не выбирать короткое имя модуля молча и не выводить его из имени каталога:
   короткое имя — только для неимпортируемых проектов и с записанной причиной.
 - Не выводить `<appname>` из имени репозитория или модуля: `vp-appeal-doc-creator`
