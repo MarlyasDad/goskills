@@ -34,7 +34,7 @@ metadata:
 | Имя модуля | Путь импорта (`module`), не имя проекта. Кандидат — из git remote: `git@github.com:org/repo.git` → `github.com/org/repo`. Спросить, будет ли проект импортироваться другими; если нет — предложить короткое имя и получить явное согласие. Без remote — `go.work` или родительский `go.mod`; иначе **спросить пользователя** |
 | Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/` и `internal/transport/` |
 | Версия Go | явно указанная пользователем; иначе `.go-version`, `toolchain` или CI-конфиг; иначе системная из `go version`. Если системная ниже `1.26` — уточнить у пользователя |
-| Тестовый стек | stdlib или `mockery` + `testify`. Спросить. Если пользователь не указал — stdlib; если просит моки — добавить `mockery` в `.bin-deps`, `testify` в `go.mod` сразу |
+| Тестовый стек | `mockery` + `testify` по умолчанию. `stdlib` и ручные моки — только если пользователь явно попросил. `mockery` → `.bin-deps`, `testify` → `go.mod`, `.mockery.yaml` в корень |
 | Данные разработчика | имя и email для локального git-конфига. Спросить вместе с остальными данными; если пользователь не указал — показать текущие `git config user.name` и `git config user.email` и подтвердить |
 
 Правила:
@@ -54,9 +54,10 @@ metadata:
 - Данные разработчика записывать в **локальный** конфиг проекта, а не в
   глобальный: имя и email могут отличаться от настроек ПК. Не придумывать их:
   если пользователь не указал и git-конфиг пуст — запросить.
-- Если пользователь выбирает `mockery` + `testify` — это часть каркаса, а не
-  поздняя правка: `mockery` идёт в `.bin-deps`, `testify` — в `go.mod`,
-  моки генерируются, а не пишутся руками.
+- `mockery` + `testify` — тестовый стек по умолчанию, а не поздняя правка:
+  `mockery` идёт в `.bin-deps`, `testify` — в `go.mod`, моки генерируются,
+  а не пишутся руками. `stdlib` и ручные проверки — только по явному
+  запросу пользователя.
 - `<appname>` — латиница в нижнем регистре, без пробелов и дефисов: имя
   каталога, бинаря и Go-пакета.
 - Если проект ещё не под git — выполнить `git init`. Remote нужен только для
@@ -74,6 +75,7 @@ metadata:
 ├── .agentignore
 ├── README.md
 ├── Makefile
+├── .mockery.yaml
 ├── AGENTS.md
 ├── configs/
 │   └── .env.example
@@ -125,9 +127,9 @@ metadata:
    `Load()`; локальные конфиги адаптеров вкладываются, а не дублируются.
    `config_test.go` — дефолты и ошибка на неверном значении. Локальный файл
    (`file.go`, флаг `-config`) добавляется, когда нужен запуск вне k8s.
-   Если выбран `testify` — `go get github.com/stretchr/testify`, тест
-   конфига пишется на `require`. Правила источников, композиции и
-   валидации — `skills/config`.
+   По умолчанию — `go get github.com/stretchr/testify`, тест конфига
+   пишется на `require`. `stdlib` без testify — только по явному запросу.
+   Правила источников, композиции и валидации — `skills/config`.
 6. **Приложение.** `internal/app/<appname>/app.go` — DI приложения: создаёт
    адаптеры, сервисы и транспорт из `Config`, запускает и останавливает.
    Пока зависимостей нет — минимальный `App`, `New(cfg, log)` и `Run(ctx)`.
@@ -135,8 +137,8 @@ metadata:
 7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → `app.New` →
    сигналы ОС → `Run` и graceful shutdown. Адаптеры здесь не создаются.
 8. **Команды.** `Makefile` по `skills/makefile`: `build-<app>`, `run-<app>`,
-   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`. Если выбран
-   `mockery` — `.mockery.yaml` в корне и установка через `.bin-deps`.
+   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`. `mockery`
+   ставится через `.bin-deps`; `.mockery.yaml` — в корне.
 9. **AGENTS.md.** Обзор проекта, команды из `Makefile`, правило «тесты по
    `skills/testing`», границы. Если модуль короткий — причина выбора имени.
    Если файл уже есть — слить, а не перезаписать.
@@ -252,8 +254,8 @@ func Load() (*Config, error) {
 
 ### internal/config/config_test.go
 
-Ниже stdlib-вариант. Если в каркасе выбран `testify` — те же проверки через
-`require`.
+По умолчанию — `testify/require`. Если пользователь явно отказался от
+`testify`, заменить `require` на `if`/`t.Fatalf`.
 
 ```go
 package config
@@ -261,6 +263,8 @@ package config
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad_Defaults(t *testing.T) {
@@ -268,23 +272,16 @@ func TestLoad_Defaults(t *testing.T) {
 	t.Setenv("SHUTDOWN_TIMEOUT", "")
 
 	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-	if cfg.Env != "local" {
-		t.Errorf("Env = %q, want %q", cfg.Env, "local")
-	}
-	if cfg.ShutdownTimeout != 10*time.Second {
-		t.Errorf("ShutdownTimeout = %v, want %v", cfg.ShutdownTimeout, 10*time.Second)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "local", cfg.Env)
+	require.Equal(t, 10*time.Second, cfg.ShutdownTimeout)
 }
 
 func TestLoad_RejectsInvalidShutdownTimeout(t *testing.T) {
 	t.Setenv("SHUTDOWN_TIMEOUT", "soon")
 
-	if _, err := Load(); err == nil {
-		t.Fatal("Load() error = nil, want error")
-	}
+	_, err := Load()
+	require.Error(t, err)
 }
 ```
 
@@ -423,8 +420,7 @@ make build-all
 
 Ожидания:
 
-- `go.mod` содержит `module`, `go` и, если выбран, `testify`; лишних
-  зависимостей нет.
+- `go.mod` содержит `module`, `go` и `testify`; лишних зависимостей нет.
 - `make build-all` создаёт бинарь, `make run-<appname>` запускается и
   завершается по Ctrl+C.
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
@@ -444,10 +440,10 @@ make build-all
   реальной потребности.
 - Не создавать `internal/domain`, `internal/services`, `internal/repository`,
   `internal/infra`, `internal/transport`, `tests/`, `api/` без первого файла.
-- Не добавлять сторонние зависимости в `go.mod` на старте: только stdlib,
-  кроме выбранного тестового стека (`testify`).
-- Не откладывать `mockery`/`testify`, если пользователь выбрал их при
-  bootstrap: моки генерируются сразу, руками не пишутся.
+- Не добавлять сторонние зависимости в `go.mod` на старте: только stdlib и
+  `testify` по умолчанию. `stdlib` без testify — только по явному запросу.
+- Не откладывать `mockery`/`testify`: они входят в каркас по умолчанию, моки
+  генерируются, руками не пишутся.
 - Не дублировать настройки адаптеров в общем конфиге: вкладывать локальный
   `Config` (`postgres.Config` и т.п.).
 - Не делить `internal/config` по приложениям: конфиг один на модуль.

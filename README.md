@@ -42,7 +42,7 @@ OpenCode и попросите агента собрать каркас:
 Агент загрузит `bootstrap`, `project-structure`, `architecture`, `config`,
 `testing` и создаст минимальный работающий каркас:
 
-- `go.mod` — имя модуля и версия Go;
+- `go.mod` — имя модуля и версия Go, `testify` для тестов;
 - локальный git-конфиг с именем и email разработчика;
 - `cmd/<appname>/main.go` — bootstrap, сигналы ОС и graceful shutdown;
 - `internal/app/<appname>/app.go` — DI приложения: адаптеры, сервисы, Run;
@@ -50,7 +50,7 @@ OpenCode и попросите агента собрать каркас:
 - `internal/platform/logger/` — примитивы;
 - `configs/.env.example` — шаблон переменных окружения;
 - `Makefile` — один на модуль: `build-<app>`, `run-<app>`, `build-all`, `test`, `test-race`, `lint`;
-- `AGENTS.md`, `.gitignore`, `.agentignore`, `README.md`.
+- `AGENTS.md`, `.gitignore`, `.agentignore`, `.mockery.yaml`, `README.md`.
 
 Служебные файлы корня создаются по отдельным навыкам: `makefile`,
 `gitignore`, `agentignore`.
