@@ -1,4 +1,5 @@
 ## 2026-11-18
+- README: добавлено описание проекта, состав навыков и структура репозитория (Alexander Yudaev <yudaev.alex@gmail.com>)
 - AGENTS.md: заполнена проектная память goskills — структура, навыки, workflow, проверки, решения и безопасность (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: перенесены workflow, иерархия правил, спеки vs навыки и безопасность из rd-hub-go (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: добавлены каркас AGENTS.md и правила ведения проектной памяти (Alexander Yudaev <yudaev.alex@gmail.com>)
