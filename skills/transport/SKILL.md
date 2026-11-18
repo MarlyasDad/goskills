@@ -69,20 +69,51 @@ internal/transport/<appname>/
 - Интерфейс маленький: 1–3 метода.
 
 ```go
+// internal/shared/user.go
+type RegisterUserInput struct {
+	Email string
+}
+
+type RegisterUserOutput struct {
+	ID string
+}
+```
+
+```go
 // internal/transport/creator/http/handler.go
 type RegisterUser interface {
 	Register(ctx context.Context, input shared.RegisterUserInput) (shared.RegisterUserOutput, error)
 }
 ```
 
-Типы операции — в `shared` или `domain`, чтобы ни сервис, ни транспорт не
-импортировали друг друга. Если `Input`/`Output` нужны обеим сторонам,
-вынести их в `shared`.
+```go
+// internal/services/creator/user/register.go
+func (s *Service) Register(
+	ctx context.Context,
+	input shared.RegisterUserInput,
+) (shared.RegisterUserOutput, error) {
+	// ...
+}
+```
+
+Почему так:
+
+- если транспорт возьмёт `user.RegisterInput` из сервиса — транспорт начнёт
+  импортировать `services`;
+- если сервис возьмёт `transport.RegisterRequest` — сервис начнёт
+  импортировать `transport`;
+- общий контракт в `shared` разрывает эту связь: `transport → shared` и
+  `services → shared`, но не друг в друга.
+
+Типы операции могут лежать в `domain`, если это доменные типы. `shared` — для
+прикладных контрактов, которые нужны и транспорту, и сервису.
 
 ## DTO
 
 - `Request`/`Response` — в `transport`.
-- `Input`/`Output` — в сервисе; транспорт маппит одно в другое.
+- `Input`/`Output` — в сервисе; если нужны транспорту, вынести их в `shared`
+  и импортировать обеими сторонами. Тогда `dto.go` в сервисе может содержать
+  алиасы или не создаваться.
 - JSON/XML/query-теги — только в DTO транспорта.
 - Доменные сущности не сериализуются напрямую.
 - Валидация формата — на транспорте; бизнес-валидация — в сервисе/домене.
