@@ -1,6 +1,6 @@
 ---
 name: config
-description: Правила конфигурации Go-проекта: env в k8s и локальный файл по флагу, приоритет источников, общий Config на модуль, композиция из локальных Config адаптеров, валидация и секреты. Используется при добавлении настройки или адаптера. Раскладка — skills/project-structure, импорты — skills/architecture.
+description: Правила конфигурации Go-проекта: env в k8s и локальный env-файл по флагу, общий Config на модуль, композиция из локальных Config адаптеров, валидация в конструкторе и секреты. Используется при добавлении настройки или адаптера. Раскладка — skills/project-structure, импорты — skills/architecture.
 license: MIT
 compatibility: opencode
 metadata:
@@ -11,7 +11,7 @@ metadata:
 # Конфигурация Go-проекта
 
 Навык отвечает на вопросы «**откуда читать настройки**», «**как собрать
-Config**» и «**что и когда валидировать**». Вопрос «где лежит файл» — в
+Config**» и «**где валидировать**». Вопрос «где лежит файл» — в
 `skills/project-structure`; «что можно импортировать» — в
 `skills/architecture`; «как тестировать» — в `skills/testing`.
 
@@ -19,38 +19,30 @@ Config**» и «**что и когда валидировать**». Вопро�
 
 1. **Один конфиг на модуль.** Конфиг-файл и набор env общие для всех
    приложений. Деления `internal/config/<appname>` нет.
-2. **Env — единый runtime-интерфейс.** В k8s значения приходят из
-   ConfigMap/Secret; локально файл по флагу `-config` загружается в env.
-   Дальше код работает одинаково.
-3. **Схема — рядом с владельцем.** Поля и валидация адаптера живут в его
-   пакете; общий `Config` их вкладывает, а не дублирует.
-4. **Секреты — только из env/Secret.** Не в git, не в примерах, не в логах.
+2. **Источник не смешивается.** В k8s — только env из ConfigMap/Secret. При
+   локальном запуске — только env-файл, который загружается в окружение.
+3. **Схема — рядом с владельцем.** Поля адаптера живут в его пакете; общий
+   `Config` их вкладывает, а не дублирует.
+4. **Валидация — в конструкторе.** `New` адаптера проверяет свой `Config`.
+   `Load()` и DI не валидируют секции, которые приложение не использует.
+5. **Секреты — только из env/Secret.** Не в git, не в примерах, не в логах.
 
 ## Источники
 
-| Где запущено | Источник | Кто выставляет |
+| Где запущено | Источник | Правило |
 |---|---|---|
-| k8s | env из ConfigMap/Secret | манифесты |
-| локально | файл по `-config` | `cmd`, до `config.Load()` |
-| unit-тест | env | `t.Setenv` |
+| k8s | env из ConfigMap/Secret | файл не используется |
+| локально | env-файл по флагу `-config` | файл перетирает окружение |
+| unit-тест | env через `t.Setenv` | файл не используется |
 
-Приоритет значений — от сильного к слабому:
-
-1. **Непустой env до `LoadFile`** — shell, k8s, `t.Setenv`. Файлом не
-   перетирается.
-2. **Значение из файла** — заполняет переменные, которых не было или которые
-   были пустыми до загрузки.
-3. **Дефолт в `Load()`** — если значение не пришло ни из env, ни из файла.
-
-После `LoadFile` процесс видит уже объединённое окружение: `Load()` не
-различает, откуда пришло значение. «Не перетираются» относится к моменту
-**до** загрузки файла, а не к чтению после неё.
-
-Пустая переменная (`KEY=`) считается незаданной: её может заполнить файл,
-иначе сработает дефолт. Это согласовано с `env.go`, где пустое значение даёт
-fallback.
-
-- Секреты локально можно передать обычным env, не файлом.
+- Файл загружается в окружение **в лоб**: все его переменные выставляются
+  через `os.Setenv`, уже существующие значения перетираются.
+- Проверок «была ли переменная задана раньше» нет. Один запуск — один
+  источник.
+- После загрузки файла `Load()` читает готовое окружение и не знает, откуда
+  пришло значение.
+- В k8s не подкладывается env-файл: секции с секретами и env-переменные
+  одновременно не смешиваются.
 - Формат файла выбирает проект (env, JSON, YAML). Требование одно: после
   загрузки имена переменных совпадают с k8s.
 
@@ -58,19 +50,22 @@ fallback.
 
 | Слой | Что содержит | Чего не содержит |
 |---|---|---|
-| `configs/` | `.env.example`, локальные файлы | кода |
-| `internal/config/` | `Config`, `Load()`, чтение env и файла | клиентов, бизнес-логики |
+| `configs/` | `.env.example`, локальные `.env.*` | кода |
+| `internal/config/` | `Config`, `Load()`, `LoadFile()` | клиентов, бизнес-логики |
 | `internal/infra/<adapter>/config.go` | локальный `Config`, `Validate()` | чтения env, импорта `config` |
-| `cmd/<appname>/` | флаг `-config`, вызов `Load()`, валидация используемых секций, DI | дублирования полей |
+| `internal/app/<appname>/app.go` | DI: адаптеры и сервисы из `Config` | дублирования полей |
+| `cmd/<appname>/` | флаг `-config`, `Load()`, логгер, `app.New`, сигналы | создания адаптеров |
 
-Подробная раскладка каталогов — в `skills/project-structure`.
+Подробная раскладка каталогов — в `skills/project-structure`; границы
+импортов — в `skills/architecture`.
 
 ## Один Config на модуль
 
 - `Config` — зеркало конфиг-файла: общие настройки плюс вложенные локальные
   конфиги адаптеров.
-- `Load()` разбирает все секции, но **не требует** настройки неиспользуемых
-  адаптеров. Приложение валидирует только то, что подключает.
+- `Load()` разбирает все секции, но не проверяет обязательные поля
+  адаптеров. Если приложение не использует Postgres, `DB_DSN` может быть
+  пустым — приложение всё равно запустится.
 - Приложений может быть несколько: каждое берёт из общего `Config` свои
   секции. Отдельных конфигов на приложение нет.
 
@@ -91,7 +86,7 @@ type Config struct {
 	Postgres        postgres.Config
 }
 
-// Load разбирает все секции. Обязательные поля проверяет потребитель.
+// Load разбирает все секции. Обязательные поля проверяют конструкторы.
 func Load() (*Config, error) {
 	timeout, err := Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
 	if err != nil {
@@ -113,25 +108,11 @@ func Load() (*Config, error) {
 }
 ```
 
-Если приложению нужен свой набор, оно не заводит второй `Config`, а берёт
-подмножество:
-
-```go
-cfg, err := config.Load()
-if err != nil {
-	return err
-}
-if err := cfg.Postgres.Validate(); err != nil {
-	return fmt.Errorf("postgres config: %w", err)
-}
-repo := postgres.New(cfg.Postgres)
-```
-
 ## Локальный Config адаптера
 
 - Только поля и валидация. Env-теги, чтение `os.Getenv`, дефолты из env —
   не здесь.
-- `New`/`NewClient` принимает `Config` аргументом.
+- `New` принимает `Config` аргументом и сам вызывает `Validate()`.
 - Адаптер не импортирует `internal/config`: направление обратное.
 
 ```go
@@ -156,6 +137,73 @@ func (c Config) Validate() error {
 }
 ```
 
+```go
+// internal/infra/postgres/postgres.go
+func New(cfg Config) (*Pool, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return &Pool{ /* ... */ }, nil
+}
+```
+
+Если приложение не вызывает `postgres.New`, его конфиг не проверяется и не
+мешает запуску.
+
+## DI приложения
+
+`internal/app/<appname>/app.go` — composition root приложения: создаёт
+адаптеры и сервисы, запускает и останавливает приложение.
+
+```go
+// internal/app/creator/app.go
+type App struct {
+	svc *services.ReportService
+	log *slog.Logger
+}
+
+func New(cfg *config.Config, log *slog.Logger) (*App, error) {
+	pg, err := postgres.New(cfg.Postgres)
+	if err != nil {
+		return nil, fmt.Errorf("postgres: %w", err)
+	}
+	repo := postgres.NewRepo(pg)
+	svc := services.NewReportService(repo)
+
+	return &App{svc: svc, log: log}, nil
+}
+
+func (a *App) Run(ctx context.Context) error {
+	// запуск и останов по ctx
+}
+```
+
+`cmd/<appname>/main.go` не создаёт адаптеры. Он делает только:
+
+1. разбирает `-config` и вызывает `config.LoadFile` / `config.Load`;
+2. создаёт логгер;
+3. вызывает `app.New(cfg, log)`;
+4. ловит сигналы ОС и вызывает `Run`/останов.
+
+```go
+// cmd/creator/main.go
+cfg, err := config.Load()
+log := logger.New(cfg.Env)
+
+a, err := app.New(cfg, log)
+if err != nil {
+	return fmt.Errorf("new app: %w", err)
+}
+
+ctx, stop := signal.NotifyContext(context.Background(),
+	os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+if err := a.Run(ctx); err != nil {
+	return fmt.Errorf("run app: %w", err)
+}
+```
+
 ## Локальный запуск
 
 `cmd/<appname>` разбирает только флаг и отдаёт путь загрузчику:
@@ -172,11 +220,11 @@ cfg, err := config.Load()
 ```
 
 - `configPath == ""` — только env, как в k8s;
-- `LoadFile` только выставляет env и возвращает ошибку; `Load()` читает env;
-- файл не перетирает **непустые** env, заданные **до** `LoadFile`;
-- пустую переменную файл заполняет — она считается незаданной;
+- `LoadFile` выставляет все переменные из файла через `os.Setenv`;
+- существующие env перетираются — это ожидаемо;
+- `Load()` читает уже готовое окружение;
 - путь и содержимое файла не логируются;
-- сам файл с секретами — `configs/*.local.*` в `.gitignore`.
+- сам файл с секретами (`configs/.env.dev`) — в `.gitignore`.
 
 ```go
 // internal/config/file.go — формат разбирает parseFile
@@ -189,9 +237,6 @@ func LoadFile(path string) error {
 		return err
 	}
 	for key, value := range values {
-		if os.Getenv(key) != "" {
-			continue // env, заданный до загрузки, сильнее файла
-		}
 		if err := os.Setenv(key, value); err != nil {
 			return err
 		}
@@ -220,9 +265,10 @@ func LoadFile(path string) error {
    Это единственный шаблон для всех приложений.
 2. `internal/infra/<adapter>/config.go` — локальный `Config` и `Validate()`.
 3. `internal/config/config.go` — поле в общем `Config` и разбор в `Load()`.
-4. Composition root — `cmd/<appname>/main.go`: проверить секцию и создать
-   адаптер, передав ему локальный конфиг.
-5. `internal/config/config_test.go` — дефолты и неверные значения.
+4. `internal/app/<appname>/app.go` — создать адаптер с локальным конфигом:
+   `postgres.New(cfg.Postgres)`. Валидация уже внутри `New`.
+5. `internal/config/config_test.go` и тест адаптера — дефолты и неверные
+   значения.
 
 Пример: появился Postgres.
 
@@ -230,16 +276,6 @@ func LoadFile(path string) error {
 # configs/.env.example
 DB_DSN=postgres://user:pass@localhost:5432/app?sslmode=disable
 DB_MAX_CONNS=10
-```
-
-```go
-// internal/infra/postgres/config.go
-type Config struct {
-	DSN      string
-	MaxConns int
-}
-
-func (c Config) Validate() error { /* обязательные поля */ }
 ```
 
 ```go
@@ -266,45 +302,46 @@ func Load() (*Config, error) {
 ```
 
 ```go
-// cmd/<appname>/main.go — composition root
-cfg, err := config.Load()
-if err != nil {
-	return fmt.Errorf("load config: %w", err)
-}
-if err := cfg.Postgres.Validate(); err != nil {
-	return fmt.Errorf("postgres config: %w", err)
-}
+// internal/app/creator/app.go — DI приложения
+func New(cfg *config.Config, log *slog.Logger) (*App, error) {
+	pg, err := postgres.New(cfg.Postgres) // Validate внутри
+	if err != nil {
+		return nil, fmt.Errorf("postgres: %w", err)
+	}
+	repo := postgres.NewRepo(pg)
+	svc := services.NewReportService(repo)
 
-pg := postgres.New(cfg.Postgres) // пул соединений
-app := app.New(pg)               // в app приходит готовый порт
+	return &App{svc: svc, log: log}, nil
+}
 ```
 
-`internal/app/<appname>/app.go` получает готовый порт: `app.New(pg)`.
-Создание `postgres.New(cfg.Postgres)` — в `cmd`, потому что `app` не
-импортирует `infra`. Если создание адаптера сейчас в `app.go`, это
-нарушение границы `app → infra`.
+Если приложение не использует Postgres, шаг 4 для него не выполняется:
+`postgres.New` не вызывается, `DB_DSN` не проверяется.
 
 ## Тесты
 
-- `internal/config/..._test.go`: дефолты, неверные значения, приоритет
-  источников.
+- `internal/config/..._test.go`: дефолты, неверные значения.
+- `internal/infra/<adapter>/..._test.go`: `New` отклоняет неверный `Config`.
+- Загрузчик файла проверяется отдельно: файл перетирает уже заданную env.
 - Env выставляется через `t.Setenv`, глобальное окружение не меняется.
-- Тест загрузчика файла не должен зависеть от реальных `configs/*.local.*`:
-  файл создаётся во временном каталоге.
+- Тест загрузчика не зависит от реальных `configs/.env.*`: файл создаётся во
+  временном каталоге.
 - Подробно — в `skills/testing`.
 
 ## Антипаттерны
 
 - `internal/config/<appname>` и отдельный конфиг на каждое приложение.
 - Дублировать `DB_DSN`, `MaxConns` и другие поля адаптера в общем конфиге.
-- Читать env в адаптерах, `platform` или `app`.
-- Валидировать в `Load()` секции, которые приложение не использует.
+- Читать env в адаптерах или `platform`.
+- Валидировать в `Load()` или DI секции, которые приложение не использует.
+- Вызывать `cfg.Postgres.Validate()` в обход `New`.
+- Создавать адаптеры в `cmd/<appname>` вместо `internal/app/<appname>/app.go`.
+- Смешивать в k8s env-файл и env-переменные.
+- Проверять «была ли переменная задана раньше» при загрузке файла.
 - Загружать конфиг в `init()` или глобальную переменную.
 - Коммитить реальный конфиг, печатать секреты в лог.
 - Добавлять пакет с настройками, не обновив `configs/.env.example` и
   `internal/config`.
-- Создавать адаптер в `internal/app/<appname>/app.go` вместо `cmd`.
-- Перетирать непустые env, заданные до загрузки, локальным файлом.
 - Добавлять префикс приложения к env без реальной необходимости.
 
 ## Границы

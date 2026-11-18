@@ -68,11 +68,11 @@ metadata:
 | `services` | правила над несколькими агрегатами | unit + фейки репозиториев | `internal/services/..._test.go` |
 | `app/<appname>` | порядок шагов, транзакции, идемпотентность, ошибки | unit + фейки портов | `internal/app/<appname>/..._test.go` |
 | `repository` | контракт порта | общий набор для всех реализаций | `internal/testkit/repositorytest` |
-| `infra/<adapter>` | SQL, ограничения, маппинг, retry, timeout | интеграционные с реальной системой | `internal/infra/<adapter>/..._test.go` |
+| `infra/<adapter>` | валидация `Config` в `New`, SQL, маппинг, retry, timeout | unit для `New` + интеграционные с реальной системой | `internal/infra/<adapter>/..._test.go` |
 | `transport/<appname>` | разбор запроса, маппинг ошибок, коды | `httptest`, `bufconn`, фейковые сценарии | `internal/transport/..._test.go` |
 | `platform/<pkg>` | парсинг, настройка, дефолты | unit | `internal/platform/..._test.go` |
-| `config` | композиция, чтение env/файла, обязательные поля | unit | `internal/config/..._test.go` |
-| `cmd/<appname>` | wiring и запуск | smoke или e2e | `tests/` |
+| `config` | парсинг env/файла, дефолты, перетирание env файлом | unit | `internal/config/..._test.go` |
+| `cmd/<appname>` | bootstrap и запуск | smoke или e2e | `tests/` |
 
 ## Unit-тесты
 
@@ -303,7 +303,8 @@ cover:
 
 Не обязателен:
 
-- Чистый wiring в `cmd`, если он покрыт smoke/e2e.
+- Чистый bootstrap в `cmd`, если он покрыт smoke/e2e.
+- DI в `app.go`, если он покрыт smoke/e2e.
 - Сгенерированный код.
 - Документация и конфиги без логики.
 

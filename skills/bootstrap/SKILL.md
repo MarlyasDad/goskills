@@ -121,10 +121,12 @@ metadata:
    `config_test.go` — дефолты и ошибка на неверном значении. Локальный файл
    (`file.go`, флаг `-config`) добавляется, когда нужен запуск вне k8s.
    Правила источников, композиции и валидации — `skills/config`.
-6. **Приложение.** `internal/app/<appname>/app.go` — точка сборки сценариев.
-   Пока сценариев нет — минимальный `App` с `Run(ctx)`.
-7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → приложение →
-   запуск и graceful shutdown по сигналу.
+6. **Приложение.** `internal/app/<appname>/app.go` — DI приложения: создаёт
+   адаптеры, сервисы и транспорт из `Config`, запускает и останавливает.
+   Пока зависимостей нет — минимальный `App`, `New(cfg, log)` и `Run(ctx)`.
+   Импорт `infra`, `transport`, `config`, `platform` — только в `app.go`.
+7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → `app.New` →
+   сигналы ОС → `Run` и graceful shutdown. Адаптеры здесь не создаются.
 8. **Команды.** `Makefile`: `build`, `run`, `test`, `test-race`, `lint`.
 9. **AGENTS.md.** Обзор проекта, команды из `Makefile`, правило «тесты по
    `skills/testing`», границы. Если модуль короткий — причина выбора имени.
@@ -279,16 +281,23 @@ func TestLoad_RejectsInvalidShutdownTimeout(t *testing.T) {
 ```go
 package <appname>
 
-import "context"
+import (
+	"context"
+	"log/slog"
 
-// App — точка сборки сценариев приложения.
-type App struct{}
+	"<module>/internal/config"
+)
 
-func New() *App {
-	return &App{}
+// App — DI приложения: адаптеры, сервисы, запуск и останов.
+type App struct {
+	log *slog.Logger
 }
 
-// Run работает до отмены контекста. Сценарии добавляются сюда.
+func New(cfg *config.Config, log *slog.Logger) (*App, error) {
+	return &App{log: log}, nil
+}
+
+// Run работает до отмены контекста. Адаптеры создаются в New.
 func (a *App) Run(ctx context.Context) error {
 	<-ctx.Done()
 	return nil
@@ -322,11 +331,17 @@ func main() {
 	log := logger.New(cfg.Env)
 	slog.SetDefault(log)
 
+	a, err := app.New(cfg, log)
+	if err != nil {
+		log.Error("new app", "error", err)
+		os.Exit(1)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(),
 		os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := app.New().Run(ctx); err != nil {
+	if err := a.Run(ctx); err != nil {
 		log.Error("run app", "error", err)
 		os.Exit(1)
 	}
@@ -364,7 +379,7 @@ lint:
 
 ```gitignore
 bin/
-configs/*.local.*
+configs/.env.*
 .env
 .env.*
 !configs/.env.example
@@ -398,7 +413,7 @@ SHUTDOWN_TIMEOUT=10s
 - правило: раскладка — `skills/project-structure`, зависимости —
   `skills/architecture`, тесты — `skills/testing`;
 - границы: не создавать пустые каталоги, не добавлять зависимости без
-  необходимости, не коммитить `configs/*.local.*` и `.env`.
+  необходимости, не коммитить `configs/.env.*` и `.env`.
 
 Если `AGENTS.md` уже существует — дополнить, не перезаписывать. Расширенный
 шаблон и слияние — в `skills/agents-md`.
@@ -419,6 +434,8 @@ make build
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
 - `internal/platform` не импортирует пакеты проекта.
 - `internal/config` — один пакет на модуль, без подкаталогов по приложениям.
+- `cmd/<appname>` содержит только конфиг, логгер, `app.New`, сигналы и
+  запуск/останов; адаптеров там нет.
 - `internal/domain` и другие слои отсутствуют, пока в них нет файлов.
 - В `.git/config` записаны имя и email разработчика, глобальный конфиг не
   изменён.
@@ -440,9 +457,12 @@ make build
 - Не выводить `<appname>` из имени репозитория или модуля: `vp-appeal-doc-creator`
   даёт приложение `creator`.
 - Не помещать бизнес-логику и SQL в `cmd/`.
+- Не создавать адаптеры и сервисы в `cmd/` — это `internal/app/<appname>/app.go`.
+- Не валидировать секции конфига в `app.go` или `Load()` — это делает `New`
+  адаптера.
 - Не заводить `pkg/`, `util/`, `common/`, `helpers/`.
 - Не задавать имя и email разработчика через `git config --global`.
-- Не коммитить `.env*`, `configs/*.local.*` и `bin/`; коммитится только
+- Не коммитить `.env*`, `configs/.env.*` и `bin/`; коммитится только
   `configs/.env.example`.
 - Не оставлять проект в нерабочем состоянии: каждый шаг заканчивается
   собираемым кодом.

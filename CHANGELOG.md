@@ -1,5 +1,7 @@
 ## 2026-11-18
-- config: добавлен чек-лист пакета с конфигурацией — configs/.env.example, локальный Config, общий Config и создание адаптера в cmd (Alexander Yudaev <yudaev.alex@gmail.com>)
+- architecture: app.go — composition root приложения, cmd — только bootstrap и сигналы; transport вызывает сценарии через свои интерфейсы (Alexander Yudaev <yudaev.alex@gmail.com>)
+- config: валидация вынесена в New адаптера, env-файл перетирает окружение без проверок и приоритетов (Alexander Yudaev <yudaev.alex@gmail.com>)
+- config: добавлен чек-лист пакета с конфигурацией — configs/.env.example, локальный Config, общий Config и создание адаптера в DI приложения (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: уточнён приоритет источников — непустой env до загрузки файла сильнее файла, пустой считается незаданным (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: добавлен навык конфигурации — источники env/файл, общий Config на модуль, композиция, валидация и секреты (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: один общий конфиг модуля в internal/config без деления на app, env перенесён из platform; локальный файл по флагу -config (project-structure, architecture, bootstrap, testing, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
