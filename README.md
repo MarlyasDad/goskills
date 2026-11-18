@@ -48,7 +48,7 @@ OpenCode и попросите агента собрать каркас:
 - `internal/app/<appname>/app.go` — прикладной слой;
 - `internal/config/` — общий конфиг модуля: `Config`, `Load()`, чтение env;
 - `internal/platform/logger/` — примитивы;
-- `configs/config.example.env` — шаблон переменных окружения;
+- `configs/.env.example` — шаблон переменных окружения;
 - `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`;
 - `AGENTS.md`, `.gitignore`, `README.md`.
 

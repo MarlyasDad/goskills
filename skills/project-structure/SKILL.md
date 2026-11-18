@@ -143,7 +143,7 @@ go mod init <module>
 ├── api/
 ├── bin/
 ├── configs/
-│   └── config.example.env
+│   └── .env.example
 ├── cmd/
 │   └── appname/
 │       └── main.go
@@ -187,7 +187,7 @@ go mod init <module>
 - `Dockerfile` — сборка образа приложения.
 - `README.md` — как запустить проект и какие переменные окружения нужны.
 - `.gitignore` — минимум: `bin/`, `configs/*.local.*`, `.env*`,
-  `coverage.out`, `.idea/`, `.DS_Store`.
+  `!configs/.env.example`, `coverage.out`, `.idea/`, `.DS_Store`.
 
 ### cmd/<appname>/
 
@@ -281,7 +281,7 @@ go mod init <module>
 
 ### configs/
 
-- `configs/config.example.env` — шаблон всех переменных с комментариями;
+- `configs/.env.example` — шаблон всех переменных с комментариями;
   коммитится. Один файл на модуль.
 - Локально путь передаётся флагом `-config` и загружается в env; в k8s
   значения приходят из ConfigMap/Secret, без файла.
@@ -331,7 +331,7 @@ go mod init <module>
 | HTTP-хендлер | `internal/transport/<appname>/http/` |
 | gRPC-сервер | `internal/transport/<appname>/grpc/` |
 | WebSocket | `internal/transport/<appname>/websocket/` |
-| Новая env-переменная | `internal/config/config.go` + `configs/config.example.env` |
+| Новая env-переменная | `internal/config/config.go` + `configs/.env.example` |
 | Локальный источник конфига | `internal/config/file.go` |
 | Логгер, трейсинг, метрики | `internal/platform/<name>/` |
 | Точка сборки, wiring | `cmd/<appname>/main.go` |
@@ -378,7 +378,7 @@ go mod init <module>
 1. `go mod init <module>` — см. раздел «Инициализация проекта».
 2. Корневые файлы: `.gitignore`, `README.md`.
 3. `cmd/<appname>/main.go` — минимальный запуск.
-4. `internal/config/config.go` + `configs/config.example.env`.
+4. `internal/config/config.go` + `configs/.env.example`.
 5. `internal/platform/logger/` — логгер, если он нужен с первого запуска.
 6. `internal/domain/` — при появлении первой сущности.
 7. `internal/repository/`, `internal/infra/`, `internal/transport/` — при
@@ -400,7 +400,7 @@ go mod init <module>
 - `<appname>` одинаков в `cmd/<appname>/`, `internal/app/<appname>/`,
   `internal/transport/<appname>/`.
 - Имена env совпадают в `internal/config/config.go` и
-  `configs/config.example.env`.
+  `configs/.env.example`.
 - Имя бинаря совпадает везде, где оно задаётся:
   - `Makefile` — `go build -o bin/<appname>`;
   - `Dockerfile` — `go build -o`, `COPY` собранного файла, `ENTRYPOINT`;
@@ -428,7 +428,7 @@ go mod init <module>
 5. `swag init -g` и OpenAPI — путь к `main.go`, `title`/`host`/`basePath` в
    спецификации, каталог сгенерированных docs.
 6. env-переменные — имена и префиксы в `internal/config/` и локальных
-   конфигах адаптеров, `configs/config.example.env`, README.
+   конфигах адаптеров, `configs/.env.example`, README.
 7. README — назначение, имя проекта, модуль, имя бинаря, команды.
 8. CI — пути к `cmd/<appname>`, имена артефактов и образов.
 9. `go build ./...`, `go vet ./...`, `go test ./...`.

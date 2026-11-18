@@ -58,7 +58,7 @@ fallback.
 
 | Слой | Что содержит | Чего не содержит |
 |---|---|---|
-| `configs/` | `config.example.env`, локальные файлы | кода |
+| `configs/` | `.env.example`, локальные файлы | кода |
 | `internal/config/` | `Config`, `Load()`, чтение env и файла | клиентов, бизнес-логики |
 | `internal/infra/<adapter>/config.go` | локальный `Config`, `Validate()` | чтения env, импорта `config` |
 | `cmd/<appname>/` | флаг `-config`, вызов `Load()`, валидация используемых секций, DI | дублирования полей |
@@ -207,20 +207,82 @@ func LoadFile(path string) error {
 - Имя отражает подсистему, а не приложение: общий `DB_DSN` для всех
   приложений модуля. Префикс приложения (`CREATOR_DB_DSN`) — только если
   приложения работают с разными значениями в одном окружении.
-- Каждая переменная есть в `configs/config.example.env` и описана в README.
+- Каждая переменная есть в `configs/.env.example` и описана в README.
 - Секреты: `*_PASSWORD`, `*_TOKEN`, `*_KEY` — только из Secret/env, никогда
   из закоммиченного файла.
 
-## Добавить настройку
+## Добавить пакет с конфигурацией
 
-1. Поле — в локальном `Config` владельца (адаптер или `internal/config`).
-2. Значение — в `internal/config/Load()`.
-3. Переменная — в `configs/config.example.env` и README.
-4. Валидация — в `Validate()` владельца, вызов там, где настройка
-   используется.
-5. Тест — дефолт, неверное значение, при необходимости приоритет файла и env.
-6. Если появился новый адаптер — локальный `Config`, `Validate()`, вложение
-   в общий `Config`, передача в конструктор из `cmd`.
+Пакету нужны настройки — добавляй их по всей цепочке сразу, не оставляя
+«на потом»:
+
+1. `configs/.env.example` — переменные с комментариями и дефолтами.
+   Это единственный шаблон для всех приложений.
+2. `internal/infra/<adapter>/config.go` — локальный `Config` и `Validate()`.
+3. `internal/config/config.go` — поле в общем `Config` и разбор в `Load()`.
+4. Composition root — `cmd/<appname>/main.go`: проверить секцию и создать
+   адаптер, передав ему локальный конфиг.
+5. `internal/config/config_test.go` — дефолты и неверные значения.
+
+Пример: появился Postgres.
+
+```dotenv
+# configs/.env.example
+DB_DSN=postgres://user:pass@localhost:5432/app?sslmode=disable
+DB_MAX_CONNS=10
+```
+
+```go
+// internal/infra/postgres/config.go
+type Config struct {
+	DSN      string
+	MaxConns int
+}
+
+func (c Config) Validate() error { /* обязательные поля */ }
+```
+
+```go
+// internal/config/config.go
+type Config struct {
+	Env      string
+	Postgres postgres.Config
+}
+
+func Load() (*Config, error) {
+	maxConns, err := Int("DB_MAX_CONNS", 10)
+	if err != nil {
+		return nil, fmt.Errorf("DB_MAX_CONNS: %w", err)
+	}
+
+	return &Config{
+		Env: String("APP_ENV", "local"),
+		Postgres: postgres.Config{
+			DSN:      String("DB_DSN", ""),
+			MaxConns: maxConns,
+		},
+	}, nil
+}
+```
+
+```go
+// cmd/<appname>/main.go — composition root
+cfg, err := config.Load()
+if err != nil {
+	return fmt.Errorf("load config: %w", err)
+}
+if err := cfg.Postgres.Validate(); err != nil {
+	return fmt.Errorf("postgres config: %w", err)
+}
+
+pg := postgres.New(cfg.Postgres) // пул соединений
+app := app.New(pg)               // в app приходит готовый порт
+```
+
+`internal/app/<appname>/app.go` получает готовый порт: `app.New(pg)`.
+Создание `postgres.New(cfg.Postgres)` — в `cmd`, потому что `app` не
+импортирует `infra`. Если создание адаптера сейчас в `app.go`, это
+нарушение границы `app → infra`.
 
 ## Тесты
 
@@ -239,6 +301,9 @@ func LoadFile(path string) error {
 - Валидировать в `Load()` секции, которые приложение не использует.
 - Загружать конфиг в `init()` или глобальную переменную.
 - Коммитить реальный конфиг, печатать секреты в лог.
+- Добавлять пакет с настройками, не обновив `configs/.env.example` и
+  `internal/config`.
+- Создавать адаптер в `internal/app/<appname>/app.go` вместо `cmd`.
 - Перетирать непустые env, заданные до загрузки, локальным файлом.
 - Добавлять префикс приложения к env без реальной необходимости.
 

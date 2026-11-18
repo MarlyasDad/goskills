@@ -71,7 +71,7 @@ metadata:
 ├── Makefile
 ├── AGENTS.md
 ├── configs/
-│   └── config.example.env
+│   └── .env.example
 ├── cmd/
 │   └── <appname>/
 │       └── main.go
@@ -112,7 +112,7 @@ metadata:
    Зависимости на этом шаге не добавлять. Если модуль короткий (не
    импортируется) — зафиксировать причину в `README.md` или `AGENTS.md`.
 3. **Корневые файлы.** `.gitignore`, `README.md`,
-   `configs/config.example.env`.
+   `configs/.env.example`.
    При коротком имени модуля — записать причину выбора в `README.md`.
 4. **Платформа.** `internal/platform/logger/logger.go` — создание логгера.
 5. **Конфиг.** `internal/config/env.go` — чтение env;
@@ -367,12 +367,13 @@ bin/
 configs/*.local.*
 .env
 .env.*
+!configs/.env.example
 coverage.out
 .idea/
 .DS_Store
 ```
 
-### configs/config.example.env
+### configs/.env.example
 
 ```dotenv
 # local | staging | production
@@ -384,7 +385,7 @@ SHUTDOWN_TIMEOUT=10s
 ### README.md
 
 Минимум: назначение проекта, требования (Go), запуск (`make run`), переменные
-окружения со ссылкой на `configs/config.example.env`, команды `make`.
+окружения со ссылкой на `configs/.env.example`, команды `make`.
 
 ### AGENTS.md
 
@@ -442,7 +443,7 @@ make build
 - Не заводить `pkg/`, `util/`, `common/`, `helpers/`.
 - Не задавать имя и email разработчика через `git config --global`.
 - Не коммитить `.env*`, `configs/*.local.*` и `bin/`; коммитится только
-  `configs/config.example.env`.
+  `configs/.env.example`.
 - Не оставлять проект в нерабочем состоянии: каждый шаг заканчивается
   собираемым кодом.
 
