@@ -121,7 +121,10 @@ metadata:
 3. **Корневые файлы.** `.gitignore`, `.agentignore`, `README.md`,
    `configs/.env.example`.
    При коротком имени модуля — записать причину выбора в `README.md`.
-4. **Платформа.** `internal/platform/logger/logger.go` — создание логгера.
+4. **Платформа.** `internal/platform/logger/` — создание логгера по
+   `skills/logger`: `references/logger.go` и `references/logger_test.go`
+   копируются в пакет. Логгер — `slog`, настройки приходят через
+   `logger.Config`, env читает `internal/config`.
 5. **Конфиг.** `internal/config/env.go` — чтение env;
    `internal/config/config.go` — одно зеркало конфиг-файла: `Config` и
    `Load()`; локальные конфиги адаптеров вкладываются, а не дублируются.
@@ -196,27 +199,12 @@ func Int(key string, fallback int) (int, error) {
 }
 ```
 
-### internal/platform/logger/logger.go
+### internal/platform/logger/
 
-```go
-package logger
-
-import (
-	"log/slog"
-	"os"
-)
-
-// New создаёт JSON-логгер: debug вне production, info в production.
-func New(env string) *slog.Logger {
-	level := slog.LevelDebug
-	if env == "production" {
-		level = slog.LevelInfo
-	}
-	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: level,
-	}))
-}
-```
+Создаётся по `skills/logger`: скопировать `skills/logger/references/logger.go`
+и `skills/logger/references/logger_test.go` в `internal/platform/logger/`.
+В каркасе — JSON в stdout, уровень `info`, общие атрибуты `service`,
+`version`, `env`. `platform/logger` не читает env и не импортирует проект.
 
 ### internal/config/config.go
 
@@ -226,6 +214,8 @@ package config
 import (
 	"fmt"
 	"time"
+
+	"<module>/internal/platform/logger"
 )
 
 // Config — зеркало конфиг-файла, общее для всех приложений.
@@ -233,6 +223,7 @@ import (
 type Config struct {
 	Env             string
 	ShutdownTimeout time.Duration
+	Logger          logger.Config
 }
 
 // Load читает env и разбирает все секции.
@@ -245,9 +236,19 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("shutdown timeout must be positive")
 	}
 
+	env := String("APP_ENV", "local")
+
 	return &Config{
-		Env:             String("APP_ENV", "local"),
+		Env:             env,
 		ShutdownTimeout: timeout,
+		Logger: logger.Config{
+			Level:       String("LOG_LEVEL", "info"),
+			Format:      String("LOG_FORMAT", "json"),
+			Output:      String("LOG_OUTPUT", "stdout"),
+			ServiceName: String("SERVICE_NAME", "<appname>"),
+			Version:     String("VERSION", "dev"),
+			Environment: env,
+		},
 	}, nil
 }
 ```
@@ -337,7 +338,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log := logger.New(cfg.Env)
+	log := logger.New(cfg.Logger)
 	slog.SetDefault(log)
 
 	a, err := app.New(cfg, log)
@@ -386,6 +387,15 @@ func main() {
 APP_ENV=local
 # Таймаут graceful shutdown
 SHUTDOWN_TIMEOUT=10s
+# debug | info | warn | error
+LOG_LEVEL=info
+# json | text
+LOG_FORMAT=json
+# stdout | stderr
+LOG_OUTPUT=stdout
+# Имя сервиса и версия в общих атрибутах лога
+SERVICE_NAME=<appname>
+VERSION=dev
 ```
 
 ### README.md

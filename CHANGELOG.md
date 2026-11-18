@@ -1,3 +1,6 @@
+## 2026-11-19
+- logger: добавлен навык про логгер на log/slog — Config, уровни, JSON/text, общие атрибуты и эталонные logger.go/logger_test.go; bootstrap переведён на logger.Config (Alexander Yudaev <yudaev.alex@gmail.com>)
+
 ## 2026-11-18
 - architecture/services: закреплено, что типы интерфейса операции из transport живут в shared/domain, а не в services (Alexander Yudaev <yudaev.alex@gmail.com>)
 - transport: объяснён общий контракт Input/Output в shared, чтобы транспорт и сервис не импортировали друг друга (Alexander Yudaev <yudaev.alex@gmail.com>)

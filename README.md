@@ -30,6 +30,7 @@
 | Прикладной слой | `services` |
 | Транспорт | `transport` |
 | Конфиг и тесты | `config`, `testing` |
+| Наблюдаемость | `logger` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator` |
 | Промпты | `prompt-engineering` |
@@ -143,7 +144,7 @@ OpenCode и попросите агента собрать каркас:
 - `cmd/<appname>/main.go` — bootstrap, сигналы ОС и graceful shutdown;
 - `internal/app/<appname>/app.go` — DI приложения: адаптеры, сервисы, Run;
 - `internal/config/` — общий конфиг модуля: `Config`, `Load()`, чтение env;
-- `internal/platform/logger/` — примитивы;
+- `internal/platform/logger/` — логгер на `slog` с настройками из конфига;
 - `configs/.env.example` — шаблон переменных окружения;
 - `Makefile` — один на модуль: `build-<app>`, `run-<app>`, `build-all`, `test`, `test-race`, `lint`;
 - `AGENTS.md`, `.gitignore`, `.agentignore`, `.mockery.yaml`, `README.md`.

@@ -46,6 +46,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `transport` | HTTP/gRPC/Kafka/WebSocket, тонкие контроллеры и маппинг ошибок |
 | `config` | источники, композиция и валидация конфига |
 | `testing` | unit, интеграционные и e2e-тесты |
+| `logger` | логгер на slog, уровни, форматы, общие атрибуты |
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |
 | `gitignore` | что не коммитить |
 | `agentignore` | что агент не читает; OpenCode — `permissions` |
@@ -120,6 +121,8 @@ git diff --check
 - `Makefile` один на модуль/workspace, цели с именем приложения:
   `build-<app>`, `run-<app>`; версия Go только в `go.mod`.
 - Тестовый стек по умолчанию — `mockery` + `testify`; моки генерируются.
+- Логгер один на приложение: `slog` в `internal/platform/logger`, настройки —
+  через `logger.Config`, env читает `internal/config`.
 - `.agentignore` не читается OpenCode; для него правила переносятся в
   `permissions` с `action: "read"`.
 - Короткое имя модуля допустимо только для неимпортируемого проекта, причина
