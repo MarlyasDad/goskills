@@ -1,4 +1,7 @@
 ## 2026-11-18
+- project-structure: разделены имя модуля и имя приложения — короткое имя модуля для неимпортируемых проектов, appname по бинарю (Alexander Yudaev <yudaev.alex@gmail.com>)
+- bootstrap: согласование module и appname при создании проекта, причина короткого имени — в AGENTS.md/README (Alexander Yudaev <yudaev.alex@gmail.com>)
+- README: пояснены различия имени модуля и имени приложения (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: добавлена настройка локальных имени и email разработчика при создании проекта, README (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: уточнено определение версии Go при создании проекта — bootstrap, project-structure, README (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: добавлен навык создания каркаса Go-проекта с нуля (Alexander Yudaev <yudaev.alex@gmail.com>)
