@@ -42,6 +42,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `bootstrap` | создание Go-проекта с нуля |
 | `project-structure` | где лежит файл, раскладка каталогов |
 | `architecture` | зависимости и границы слоёв |
+| `services` | каталог на сервис, use cases, DTO, оркестрация и саги |
 | `config` | источники, композиция и валидация конфига |
 | `testing` | unit, интеграционные и e2e-тесты |
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |

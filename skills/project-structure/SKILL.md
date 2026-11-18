@@ -224,19 +224,11 @@ go mod init <module>
 
 ### internal/services/<appname>/<service>/
 
-- Каталог на сервис: `user/`, `subscription/`, `report/`. Не сваливать все
-  сервисы приложения в один пакет.
-- `ports.go` — интерфейсы, которые нужны сервису: репозитории, часы, внешние
-  порты. Только нужное этому сервису; общие порты — в `repository`/`shared`.
-- `service.go` — структура сервиса и `New(deps) *Service`.
-- `dto.go` — `Input`/`Output` для методов (`RegisterInput`,
-  `RegisterOutput`). `Request`/`Response` остаются на транспорте; если проект
-  выбрал другую пару — придерживаться её во всём модуле.
-- `register.go`, `unregister.go` — по одному use case на файл. Тест —
-  `register_test.go` рядом.
-- Сервис оркестрирует домен, репозитории и транзакции; отдельного слоя
-  use-case нет.
-- Не содержит SQL, HTTP и знаний о конкретной БД; зависимости — через порты.
+- Каталог на сервис; файлы: `ports.go`, `service.go`, `dto.go`,
+  `<method>.go`, тест рядом.
+- Путь и имена файлов — здесь; как проектировать сервис, use cases, DTO и
+  саги — `skills/services`.
+- Не складывать все сервисы приложения в один пакет.
 
 ### internal/repository/
 

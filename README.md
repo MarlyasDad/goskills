@@ -27,6 +27,7 @@
 | Группа | Навыки |
 |---|---|
 | Каркас и архитектура | `bootstrap`, `project-structure`, `architecture` |
+| Прикладной слой | `services` |
 | Конфиг и тесты | `config`, `testing` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator` |
@@ -133,8 +134,8 @@ OpenCode и попросите агента собрать каркас:
 или `README.md`. Имя приложения — имя бинаря, короткое (`creator`, `api`), не
 выводится из имени репозитория. Правила — в навыке `project-structure`.
 
-Агент загрузит `bootstrap`, `project-structure`, `architecture`, `config`,
-`testing`, `agents-md` и создаст минимальный работающий каркас:
+Агент загрузит `bootstrap`, `project-structure`, `architecture`, `services`,
+`config`, `testing`, `agents-md` и создаст минимальный работающий каркас:
 
 - `go.mod` — имя модуля и версия Go, `testify` для тестов;
 - локальный git-конфиг с именем и email разработчика;
