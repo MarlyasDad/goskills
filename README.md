@@ -28,6 +28,7 @@
 |---|---|
 | Каркас и архитектура | `bootstrap`, `project-structure`, `architecture` |
 | Прикладной слой | `services` |
+| Транспорт | `transport` |
 | Конфиг и тесты | `config`, `testing` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator` |

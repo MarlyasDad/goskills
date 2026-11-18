@@ -13,7 +13,8 @@ metadata:
 Навык отвечает на вопросы «**что тестировать**», «**чем**» и «**как оформлять
 тест**». Вопрос «где лежит файл» — в `skills/project-structure`; «какие
 зависимости допустимы» — в `skills/architecture`; «как устроен конфиг» — в
-`skills/config`; «как устроен сервис» — в `skills/services`.
+`skills/config`; «как устроен сервис» — в `skills/services`; «как устроен
+транспорт» — в `skills/transport`.
 
 ## Принципы
 

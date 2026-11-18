@@ -294,6 +294,7 @@ metadata:
 - Не импортирует `services`: интерфейс операции объявляется здесь, реализует
   сервис из `services/<appname>/<service>`, связывает `app.go`.
 - Не ходит в `repository` и `infra` напрямую: это обход сервиса.
+- Структура, DTO, коды и маппинг ошибок — `skills/transport`.
 
 ### platform/<pkg>
 

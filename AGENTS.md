@@ -43,6 +43,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `project-structure` | где лежит файл, раскладка каталогов |
 | `architecture` | зависимости и границы слоёв |
 | `services` | каталог на сервис, use cases, DTO, оркестрация и саги |
+| `transport` | HTTP/gRPC/Kafka/WebSocket, тонкие контроллеры и маппинг ошибок |
 | `config` | источники, композиция и валидация конфига |
 | `testing` | unit, интеграционные и e2e-тесты |
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |

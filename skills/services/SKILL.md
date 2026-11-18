@@ -76,6 +76,8 @@ func New(users UserRepository, subscriptions SubscriptionRepository, clock Clock
 - `Input`/`Output` для методов: `RegisterInput`, `RegisterOutput`.
 - `Request`/`Response` остаются на транспорте.
 - Не протаскивать ORM-модели и HTTP-теги.
+- Если `Input`/`Output` нужны транспорту, вынести их в `shared`, чтобы обе
+  стороны импортировали контракт, а не друг друга.
 - Если проект выбрал другую пару (`Request`/`Response`) — придерживаться её
   во всём модуле.
 
@@ -145,4 +147,5 @@ func New(users UserRepository, subscriptions SubscriptionRepository, clock Clock
 - «Где лежит каталог» — `skills/project-structure`.
 - «Как тестировать» — `skills/testing`.
 - «Как передать конфиг в `New`» — `skills/config`.
+- «Как вызывать сервис из HTTP/gRPC/Kafka» — `skills/transport`.
 - «Что решено в проекте» — `skills/agents-md`.
