@@ -1,4 +1,5 @@
 ## 2026-11-18
+- architecture: use case зафиксирован как название сценария (OnboardingUser, RemoveUser); сервис группирует несколько use cases (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: уточнено, что сервис с одним публичным методом может реализовывать один use case (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: уточнено, что сервис группирует родственные use cases, а не один сценарий (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: use case реализуется сервисами — операции в services/<appname>, app/<appname> только composition root (architecture, project-structure, testing, bootstrap, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
