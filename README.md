@@ -46,12 +46,16 @@ OpenCode и попросите агента собрать каркас:
 - локальный git-конфиг с именем и email разработчика;
 - `cmd/<appname>/main.go` — точка входа и graceful shutdown;
 - `internal/app/<appname>/app.go` — прикладной слой;
-- `internal/config/<appname>/config.go` — сборка конфига приложения
-  из локальных конфигов;
-- `internal/platform/config/`, `internal/platform/logger/` — примитивы;
-- `config/.env.example` — шаблон переменных окружения;
+- `internal/config/` — общий конфиг модуля: `Config`, `Load()`, чтение env;
+- `internal/platform/logger/` — примитивы;
+- `configs/config.example.env` — шаблон переменных окружения;
 - `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`;
 - `AGENTS.md`, `.gitignore`, `README.md`.
+
+Конфиг один на модуль: `internal/config` — общее зеркало конфиг-файла, без
+деления по приложениям. В k8s значения приходят из env; локально путь можно
+передать флагом `-config`, файл загружается в env, и дальше `Load()` работает
+одинаково.
 
 Это и есть необходимый минимум каталогов. Слои `internal/domain`,
 `internal/services`, `internal/repository`, `internal/infra`,

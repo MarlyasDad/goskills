@@ -49,9 +49,8 @@ metadata:
   как `appname` не годится.
 - Имя проекта в `appname` не обязано попадать.
 - Одинаков в `cmd/<appname>/`, `internal/app/<appname>/`,
-  `internal/config/<appname>/`, `internal/transport/<appname>/` и
-  совпадает
-  с именем файла в `bin/` (`Makefile`: `APP := <appname>`).
+  `internal/transport/<appname>/` и совпадает с именем файла в `bin/`
+  (`Makefile`: `APP := <appname>`).
 - Если приложений несколько — у каждого свой `appname`.
 
 ### Пример
@@ -129,9 +128,9 @@ go mod init <module>
 
 > Дерево показывает полный набор каталогов, а не обязательный минимум. В
 > проекте создаются только нужные; пустые каталоги не создаются. `appname` —
-> плейсхолдер: он одинаковый в `cmd/`, `internal/app/`,
-> `internal/config/` и `internal/transport/` и совпадает с именем бинаря.
-> Выбор `appname` — в разделе «Имя модуля и имя приложения».
+> плейсхолдер: он одинаковый в `cmd/`, `internal/app/` и
+> `internal/transport/` и совпадает с именем бинаря. Выбор `appname` — в
+> разделе «Имя модуля и имя приложения».
 
 ```schema
 .
@@ -142,8 +141,8 @@ go mod init <module>
 ├── .gitignore
 ├── api/
 ├── bin/
-├── config/
-│   └── .env.example
+├── configs/
+│   └── config.example.env
 ├── cmd/
 │   └── appname/
 │       └── main.go
@@ -152,8 +151,10 @@ go mod init <module>
 │   │   └── appname/
 │   │       └── app.go
 │   ├── config/
-│   │   └── appname/
-│   │       └── config.go
+│   │   ├── env.go
+│   │   ├── file.go
+│   │   ├── config.go
+│   │   └── config_test.go
 │   ├── domain/
 │   ├── infra/
 │   │   ├── http/
@@ -161,8 +162,6 @@ go mod init <module>
 │   │   ├── kafka/
 │   │   └── minio/
 │   ├── platform/
-│   │   ├── config/
-│   │   │   └── env.go
 │   │   ├── logger/
 │   │   └── tracing/
 │   ├── repository/
@@ -186,7 +185,7 @@ go mod init <module>
   отсюда, а не придумывает свои.
 - `Dockerfile` — сборка образа приложения.
 - `README.md` — как запустить проект и какие переменные окружения нужны.
-- `.gitignore` — минимум: `bin/`, `.env*` (кроме `.env.example`),
+- `.gitignore` — минимум: `bin/`, `configs/*.local.*`, `.env*`,
   `coverage.out`, `.idea/`, `.DS_Store`.
 
 ### cmd/<appname>/
@@ -253,80 +252,87 @@ go mod init <module>
 ### internal/platform/
 
 - Инфраструктурные примитивы, не связанные с предметной областью.
-- `config/` — механизм загрузки конфигурации: чтение env/.env, дефолты,
-  общие примитивы. Не знает про конкретное приложение.
 - `logger/` — создание и настройка логгера.
 - `tracing/` — инициализация трейсинга, провайдеры, экспортёры.
 - По необходимости сюда же: `metrics/`, `shutdown/`, `clock/`.
+- Настройки приходят аргументами конструктора. `platform` не читает env и не
+  импортирует пакеты проекта.
 
-### internal/config/<appname>/
+### internal/config/
 
-- Сборка конфига конкретного приложения: `config.go` с
-  `Load() (*Config, error)`.
-- `Config` — композиция: общие настройки приложения (`Env`,
-  `ShutdownTimeout`) и вложенные локальные конфиги (`postgres.Config`,
-  `kafka.Config`, `logger.Config`). Поля этих конфигов здесь не повторяются.
-- Сборка отвечает за маппинг «локальный конфиг → конструктор адаптера»:
-  `cmd` получает готовый `Config` и передаёт `cfg.Postgres` в
-  `postgres.New`.
-- Клиентов не создаёт, бизнес-логики не содержит.
+- Один пакет на модуль, без деления на `<appname>`: конфиг-файл и набор env
+  общие для всех приложений.
+- `config.go` — `Config`, зеркало конфиг-файла, и `Load() (*Config, error)`.
+  `Config` — композиция: общие настройки (`Env`, `ShutdownTimeout`) и
+  локальные конфиги адаптеров (`postgres.Config`, `kafka.Config`). Поля
+  адаптеров здесь не повторяются.
+- `env.go` — примитивы чтения env (`String`, `Duration`, `Int`). Env —
+  единый runtime-интерфейс: в k8s значения приходят из ConfigMap/Secret.
+- `file.go` — локальный источник: по флагу `-config` файл читается и
+  выставляется в env, не перетирая уже заданные переменные. Дальше `Load()`
+  работает так же, как в k8s. Формат файла выбирает проект.
+- `Load()` разбирает все секции, но не требует настройки неиспользуемых
+  адаптеров. Обязательные поля проверяет тот, кто использует конфиг:
+  `cfg.Postgres.Validate()` перед `postgres.New` или сам конструктор.
 - Импортируется только из `cmd/<appname>`; не импортирует `app/`, `domain/`,
-  `transport/` и конфиги других приложений.
-- Отличие от `internal/platform/config/`: platform отвечает на вопрос «как
-  прочитать», `config/<appname>` — «что читать и из чего собрать».
+  `transport/`.
 
 ```go
-// internal/infra/postgres/config.go — локальный конфиг адаптера
+// internal/infra/postgres/config.go — локальная схема, без env
 package postgres
 
-import (
-	"fmt"
-
-	"<module>/internal/platform/config"
-)
+import "fmt"
 
 type Config struct {
 	DSN      string
 	MaxConns int
 }
 
-func LoadConfig() (Config, error) {
-	dsn := config.String("DB_DSN", "")
-	if dsn == "" {
-		return Config{}, fmt.Errorf("DB_DSN is required")
+func (c Config) Validate() error {
+	if c.DSN == "" {
+		return fmt.Errorf("postgres: DSN is required")
 	}
-	maxConns, err := config.Int("DB_MAX_CONNS", 10)
-	if err != nil {
-		return Config{}, fmt.Errorf("DB_MAX_CONNS: %w", err)
+	if c.MaxConns <= 0 {
+		return fmt.Errorf("postgres: MaxConns must be positive")
 	}
-	return Config{DSN: dsn, MaxConns: maxConns}, nil
+	return nil
 }
 ```
 
 ```go
-// internal/config/creator/config.go — сборка для приложения creator
-package creator
+// internal/config/config.go — одно зеркало конфиг-файла на весь модуль
+package config
 
 import (
 	"fmt"
+	"time"
 
 	"<module>/internal/infra/postgres"
-	"<module>/internal/platform/config"
 )
 
 type Config struct {
-	Env      string
-	Postgres postgres.Config
+	Env             string
+	ShutdownTimeout time.Duration
+	Postgres        postgres.Config
 }
 
 func Load() (*Config, error) {
-	pg, err := postgres.LoadConfig()
+	timeout, err := Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("postgres config: %w", err)
+		return nil, fmt.Errorf("shutdown timeout: %w", err)
 	}
+	maxConns, err := Int("DB_MAX_CONNS", 10)
+	if err != nil {
+		return nil, fmt.Errorf("DB_MAX_CONNS: %w", err)
+	}
+
 	return &Config{
-		Env:      config.String("APP_ENV", "local"),
-		Postgres: pg,
+		Env:             String("APP_ENV", "local"),
+		ShutdownTimeout: timeout,
+		Postgres: postgres.Config{
+			DSN:      String("DB_DSN", ""),
+			MaxConns: maxConns,
+		},
 	}, nil
 }
 ```
@@ -344,11 +350,13 @@ func Load() (*Config, error) {
 - Сгенерированный код здесь не хранится: он кладётся в пакет, который его
   использует, и не правится руками.
 
-### config/
+### configs/
 
-- `config/.env.example` — шаблон всех переменных окружения с комментариями;
-  коммитится.
-- Реальные `.env*` не коммитятся (см. `.gitignore`).
+- `configs/config.example.env` — шаблон всех переменных с комментариями;
+  коммитится. Один файл на модуль.
+- Локально путь передаётся флагом `-config` и загружается в env; в k8s
+  значения приходят из ConfigMap/Secret, без файла.
+- Реальные файлы с секретами не коммитятся (`configs/*.local.*`).
 
 ### tests/
 
@@ -364,14 +372,15 @@ func Load() (*Config, error) {
 
 ## Несколько приложений в одном модуле
 
-- Имя `<appname>` одинаковое в `cmd/<appname>/`, `internal/app/<appname>/`,
-  `internal/config/<appname>/` и `internal/transport/<appname>/`.
+- Имя `<appname>` одинаковое в `cmd/<appname>/`, `internal/app/<appname>/`
+  и `internal/transport/<appname>/`.
 - Общий код приложений — `internal/domain/`, `internal/services/`,
   `internal/repository/`, `internal/infra/`, `internal/platform/`,
-  `internal/shared/`.
-- Конфиг приложения — своя сборка в `internal/config/<appname>/`;
-  локальные конфиги адаптеров (`postgres.Config` и т.п.) общие и
-  вкладываются, а не копируются.
+  `internal/shared/`, `internal/config/`.
+- Конфиг общий: один `internal/config` и один конфиг-файл на модуль. Каждое
+  приложение берёт из `Config` только свои секции и валидирует только их;
+  локальные конфиги адаптеров (`postgres.Config` и т.п.) вкладываются, а не
+  копируются.
 - Общего кода в `app/` между приложениями нет: если двум приложениям нужно
   одно и то же, оно выносится в общий слой, а не копируется.
 
@@ -385,15 +394,15 @@ func Load() (*Config, error) {
 | Интерфейс репозитория | `internal/repository/<entity>.go` |
 | Реализация репозитория (БД, кэш) | `internal/infra/<store>/` |
 | Локальный конфиг адаптера | `internal/infra/<adapter>/config.go` |
-| Сборка конфига приложения | `internal/config/<appname>/config.go` |
+| Сборка конфига модуля | `internal/config/config.go` |
 | Клиент внешнего HTTP/gRPC API | `internal/infra/http/`, `internal/infra/grpc/` |
 | Producer в Kafka | `internal/infra/kafka/` |
 | Consumer Kafka | `internal/transport/<appname>/kafka/` |
 | HTTP-хендлер | `internal/transport/<appname>/http/` |
 | gRPC-сервер | `internal/transport/<appname>/grpc/` |
 | WebSocket | `internal/transport/<appname>/websocket/` |
-| Конфиг приложения | `internal/config/<appname>/config.go` |
-| Новая env-переменная | локальный `config.go` владельца (`internal/infra/<adapter>/` или `internal/config/<appname>/`) + `config/.env.example` |
+| Новая env-переменная | `internal/config/config.go` + `configs/config.example.env` |
+| Локальный источник конфига | `internal/config/file.go` |
 | Логгер, трейсинг, метрики | `internal/platform/<name>/` |
 | Точка сборки, wiring | `cmd/<appname>/main.go` |
 | Контракт API | `api/` |
@@ -410,6 +419,8 @@ func Load() (*Config, error) {
   где он используется, или в домен.
 - Дубли настроек: поля `postgres.Config`, `kafka.Config` не повторяются в
   конфиге каждого приложения — сборка их вкладывает.
+- `internal/config/<appname>/` — конфиг один на модуль, деление по
+  приложениям не нужно.
 - Бизнес-логику в `cmd/` и `internal/transport/`.
 - SQL, HTTP-коды и JSON-теги транспорта в `internal/domain/`.
 - Входящие хендлеры в `internal/infra/` и исходящие клиенты в
@@ -437,7 +448,7 @@ func Load() (*Config, error) {
 1. `go mod init <module>` — см. раздел «Инициализация проекта».
 2. Корневые файлы: `.gitignore`, `README.md`.
 3. `cmd/<appname>/main.go` — минимальный запуск.
-4. `internal/config/<appname>/config.go` + `config/.env.example`.
+4. `internal/config/config.go` + `configs/config.example.env`.
 5. `internal/platform/logger/` — логгер, если он нужен с первого запуска.
 6. `internal/domain/` — при появлении первой сущности.
 7. `internal/repository/`, `internal/infra/`, `internal/transport/` — при
@@ -457,7 +468,9 @@ func Load() (*Config, error) {
   ```
   Вывод пустой.
 - `<appname>` одинаков в `cmd/<appname>/`, `internal/app/<appname>/`,
-  `internal/config/<appname>/`, `internal/transport/<appname>/`.
+  `internal/transport/<appname>/`.
+- Имена env совпадают в `internal/config/config.go` и
+  `configs/config.example.env`.
 - Имя бинаря совпадает везде, где оно задаётся:
   - `Makefile` — `go build -o bin/<appname>`;
   - `Dockerfile` — `go build -o`, `COPY` собранного файла, `ENTRYPOINT`;
@@ -478,15 +491,14 @@ func Load() (*Config, error) {
 2. Импорты — заменить все `<старый module>/...` на `<новый module>/...`:
    grep по старому префиксу должен дать пустой вывод.
 3. `<appname>` — переименовать каталоги `cmd/`, `internal/app/`,
-   `internal/config/`, `internal/transport/`; имена пакетов и бинаря
-   привести к новому `appname`.
+   `internal/transport/`; имена пакетов и бинаря привести к новому
+   `appname`.
 4. Сборка — `Makefile` (`APP`, `go build -o`), `Dockerfile` (`-o`, `COPY`,
    `ENTRYPOINT`), CI и k8s-манифесты.
 5. `swag init -g` и OpenAPI — путь к `main.go`, `title`/`host`/`basePath` в
    спецификации, каталог сгенерированных docs.
-6. env-префиксы — общие `APP_*` и префиксы приложения в
-   `internal/config/<appname>/config.go` и локальных конфигах адаптеров,
-   `config/.env.example`, README.
+6. env-переменные — имена и префиксы в `internal/config/` и локальных
+   конфигах адаптеров, `configs/config.example.env`, README.
 7. README — назначение, имя проекта, модуль, имя бинаря, команды.
 8. CI — пути к `cmd/<appname>`, имена артефактов и образов.
 9. `go build ./...`, `go vet ./...`, `go test ./...`.

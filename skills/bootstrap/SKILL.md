@@ -31,7 +31,7 @@ metadata:
 | Что | Как определить |
 |---|---|
 | Имя модуля | Путь импорта (`module`), не имя проекта. Кандидат — из git remote: `git@github.com:org/repo.git` → `github.com/org/repo`. Спросить, будет ли проект импортироваться другими; если нет — предложить короткое имя и получить явное согласие. Без remote — `go.work` или родительский `go.mod`; иначе **спросить пользователя** |
-| Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/`, `internal/config/` |
+| Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/` и `internal/transport/` |
 | Версия Go | явно указанная пользователем; иначе `.go-version`, `toolchain` или CI-конфиг; иначе системная из `go version`. Если системная ниже `1.26` — уточнить у пользователя |
 | Данные разработчика | имя и email для локального git-конфига. Спросить вместе с остальными данными; если пользователь не указал — показать текущие `git config user.name` и `git config user.email` и подтвердить |
 
@@ -69,8 +69,8 @@ metadata:
 ├── README.md
 ├── Makefile
 ├── AGENTS.md
-├── config/
-│   └── .env.example
+├── configs/
+│   └── config.example.env
 ├── cmd/
 │   └── <appname>/
 │       └── main.go
@@ -79,12 +79,10 @@ metadata:
     │   └── <appname>/
     │       └── app.go
     ├── config/
-    │   └── <appname>/
-    │       ├── config.go
-    │       └── config_test.go
+    │   ├── env.go
+    │   ├── config.go
+    │   └── config_test.go
     └── platform/
-        ├── config/
-        │   └── env.go
         └── logger/
             └── logger.go
 ```
@@ -112,15 +110,15 @@ metadata:
    `go` в `go.mod` соответствует выбранной версии и не ниже `1.26`.
    Зависимости на этом шаге не добавлять. Если модуль короткий (не
    импортируется) — зафиксировать причину в `README.md` или `AGENTS.md`.
-3. **Корневые файлы.** `.gitignore`, `README.md`, `config/.env.example`.
+3. **Корневые файлы.** `.gitignore`, `README.md`,
+   `configs/config.example.env`.
    При коротком имени модуля — записать причину выбора в `README.md`.
-4. **Платформа.** `internal/platform/config/env.go` — чтение env;
-   `internal/platform/logger/logger.go` — создание логгера.
-5. **Конфиг приложения.** `internal/config/<appname>/config.go` — сборка
-   конфига из локальных конфигов; пока адаптеров нет — `Env` и
-   `ShutdownTimeout`. `config_test.go` — дефолты и ошибка на неверном
-   значении. Локальный `Config` адаптера живёт в пакете адаптера и
-   вкладывается в сборку, а не дублируется.
+4. **Платформа.** `internal/platform/logger/logger.go` — создание логгера.
+5. **Конфиг.** `internal/config/env.go` — чтение env;
+   `internal/config/config.go` — одно зеркало конфиг-файла: `Config` и
+   `Load()`; локальные конфиги адаптеров вкладываются, а не дублируются.
+   `config_test.go` — дефолты и ошибка на неверном значении. Локальный файл
+   (`file.go`, флаг `-config`) добавляется, когда нужен запуск вне k8s.
 6. **Приложение.** `internal/app/<appname>/app.go` — точка сборки сценариев.
    Пока сценариев нет — минимальный `App` с `Run(ctx)`.
 7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → приложение →
@@ -137,7 +135,7 @@ metadata:
 Код ниже — эталон каркаса. Плейсхолдеры `<module>` и `<appname>` заменить,
 импорты привести к фактическому имени модуля.
 
-### internal/platform/config/env.go
+### internal/config/env.go
 
 ```go
 package config
@@ -205,27 +203,26 @@ func New(env string) *slog.Logger {
 }
 ```
 
-### internal/config/<appname>/config.go
+### internal/config/config.go
 
 ```go
-package <appname>
+package config
 
 import (
 	"fmt"
 	"time"
-
-	"<module>/internal/platform/config"
 )
 
-// Config — типизированные настройки приложения.
+// Config — зеркало конфиг-файла, общее для всех приложений.
+// Локальные конфиги адаптеров добавляются сюда вложенными полями.
 type Config struct {
 	Env             string
 	ShutdownTimeout time.Duration
 }
 
-// Load читает и валидирует настройки.
+// Load читает env и разбирает все секции.
 func Load() (*Config, error) {
-	timeout, err := config.Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
+	timeout, err := Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("shutdown timeout: %w", err)
 	}
@@ -234,16 +231,16 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Env:             config.String("APP_ENV", "local"),
+		Env:             String("APP_ENV", "local"),
 		ShutdownTimeout: timeout,
 	}, nil
 }
 ```
 
-### internal/config/<appname>/config_test.go
+### internal/config/config_test.go
 
 ```go
-package <appname>
+package config
 
 import (
 	"testing"
@@ -309,7 +306,7 @@ import (
 	"syscall"
 
 	"<module>/internal/app/<appname>"
-	appconfig "<module>/internal/config/<appname>"
+	appconfig "<module>/internal/config"
 	"<module>/internal/platform/logger"
 )
 
@@ -365,15 +362,15 @@ lint:
 
 ```gitignore
 bin/
+configs/*.local.*
 .env
 .env.*
-!.env.example
 coverage.out
 .idea/
 .DS_Store
 ```
 
-### config/.env.example
+### configs/config.example.env
 
 ```dotenv
 # local | staging | production
@@ -385,7 +382,7 @@ SHUTDOWN_TIMEOUT=10s
 ### README.md
 
 Минимум: назначение проекта, требования (Go), запуск (`make run`), переменные
-окружения со ссылкой на `config/.env.example`, команды `make`.
+окружения со ссылкой на `configs/config.example.env`, команды `make`.
 
 ### AGENTS.md
 
@@ -398,7 +395,7 @@ SHUTDOWN_TIMEOUT=10s
 - правило: раскладка — `skills/project-structure`, зависимости —
   `skills/architecture`, тесты — `skills/testing`;
 - границы: не создавать пустые каталоги, не добавлять зависимости без
-  необходимости, не коммитить `.env`.
+  необходимости, не коммитить `configs/*.local.*` и `.env`.
 
 Если `AGENTS.md` уже существует — дополнить, не перезаписывать. Расширенный
 шаблон и слияние — в `skills/agents-md`.
@@ -418,6 +415,7 @@ make build
 - `go build` создаёт бинарь, `make run` запускается и завершается по Ctrl+C.
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
 - `internal/platform` не импортирует пакеты проекта.
+- `internal/config` — один пакет на модуль, без подкаталогов по приложениям.
 - `internal/domain` и другие слои отсутствуют, пока в них нет файлов.
 - В `.git/config` записаны имя и email разработчика, глобальный конфиг не
   изменён.
@@ -430,8 +428,10 @@ make build
 - Не создавать `internal/domain`, `internal/services`, `internal/repository`,
   `internal/infra`, `internal/transport`, `tests/`, `api/` без первого файла.
 - Не добавлять сторонние зависимости в `go.mod` на старте: только stdlib.
-- Не дублировать настройки адаптеров в конфиге приложения: вкладывать
-  локальный `Config` (`postgres.Config` и т.п.).
+- Не дублировать настройки адаптеров в общем конфиге: вкладывать локальный
+  `Config` (`postgres.Config` и т.п.).
+- Не делить `internal/config` по приложениям: конфиг один на модуль.
+- Не помещать загрузку env/файла в `platform`: это делает `internal/config`.
 - Не выбирать короткое имя модуля молча и не выводить его из имени каталога:
   короткое имя — только для неимпортируемых проектов и с записанной причиной.
 - Не выводить `<appname>` из имени репозитория или модуля: `vp-appeal-doc-creator`
@@ -439,7 +439,8 @@ make build
 - Не помещать бизнес-логику и SQL в `cmd/`.
 - Не заводить `pkg/`, `util/`, `common/`, `helpers/`.
 - Не задавать имя и email разработчика через `git config --global`.
-- Не коммитить `.env*` (кроме `.env.example`) и `bin/`.
+- Не коммитить `.env*`, `configs/*.local.*` и `bin/`; коммитится только
+  `configs/config.example.env`.
 - Не оставлять проект в нерабочем состоянии: каждый шаг заканчивается
   собираемым кодом.
 

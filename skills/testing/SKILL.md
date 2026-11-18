@@ -70,7 +70,7 @@ metadata:
 | `infra/<adapter>` | SQL, ограничения, маппинг, retry, timeout | интеграционные с реальной системой | `internal/infra/<adapter>/..._test.go` |
 | `transport/<appname>` | разбор запроса, маппинг ошибок, коды | `httptest`, `bufconn`, фейковые сценарии | `internal/transport/..._test.go` |
 | `platform/<pkg>` | парсинг, настройка, дефолты | unit | `internal/platform/..._test.go` |
-| `config/<appname>` | композиция, валидация env, обязательные поля | unit | `internal/config/<appname>/..._test.go` |
+| `config` | композиция, чтение env/файла, обязательные поля | unit | `internal/config/..._test.go` |
 | `cmd/<appname>` | wiring и запуск | smoke или e2e | `tests/` |
 
 ## Unit-тесты
