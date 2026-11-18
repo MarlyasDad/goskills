@@ -1,4 +1,5 @@
 ## 2026-11-18
+- architecture/services: закреплено, что типы интерфейса операции из transport живут в shared/domain, а не в services (Alexander Yudaev <yudaev.alex@gmail.com>)
 - transport: объяснён общий контракт Input/Output в shared, чтобы транспорт и сервис не импортировали друг друга (Alexander Yudaev <yudaev.alex@gmail.com>)
 - transport: добавлена заготовка навыка про входящие адаптеры, HTTP/gRPC/Kafka/WebSocket, DTO и маппинг ошибок (Alexander Yudaev <yudaev.alex@gmail.com>)
 - services: добавлен навык про сервисы приложения — каталог, ports.go/service.go/dto.go, use cases, оркестрация и саги; остальные навыки ссылаются на него (Alexander Yudaev <yudaev.alex@gmail.com>)

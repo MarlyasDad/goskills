@@ -77,7 +77,8 @@ func New(users UserRepository, subscriptions SubscriptionRepository, clock Clock
 - `Request`/`Response` остаются на транспорте.
 - Не протаскивать ORM-модели и HTTP-теги.
 - Если `Input`/`Output` нужны транспорту, вынести их в `shared`, чтобы обе
-  стороны импортировали контракт, а не друг друга.
+  стороны импортировали контракт, а не друг друга. Сервис не импортирует
+  `transport`, транспорт не импортирует `services`.
 - Если проект выбрал другую пару (`Request`/`Response`) — придерживаться её
   во всём модуле.
 
