@@ -468,6 +468,7 @@ make build-all
 После каркаса:
 
 - первая сущность → `internal/domain/<entity>/`;
+- первая операция → `internal/services/<appname>/`;
 - первый порт и адаптер → `internal/repository/`, `internal/infra/<adapter>/`;
 - первый входящий адаптер → `internal/transport/<appname>/`;
 - первый интеграционный тест → `tests/` с тегом `integration`;

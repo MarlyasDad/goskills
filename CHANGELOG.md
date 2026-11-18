@@ -1,4 +1,5 @@
 ## 2026-11-18
+- architecture: закреплена модель без use-case — операции в services/<appname>, app/<appname> только composition root (architecture, project-structure, testing, bootstrap, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: в словаре разделены composition root (app.go) и прикладной сервис/use case (остальные файлы app) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - repo: закреплено правило писать текст для человека и агента — простые формулировки, расшифровка терминов (AGENTS.md, skill-creator, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлены краткая формулировка и словарь терминов, уточнён composition root и роль cmd (Alexander Yudaev <yudaev.alex@gmail.com>)

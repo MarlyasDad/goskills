@@ -66,11 +66,11 @@ metadata:
 | Слой | Что проверяем | Чем | Где |
 |---|---|---|---|
 | `domain` | инварианты, границы значений, ошибки | чистый unit, table-driven | `internal/domain/..._test.go` |
-| `services` | правила над несколькими агрегатами | unit + фейки репозиториев | `internal/services/..._test.go` |
-| `app/<appname>` | порядок шагов, транзакции, идемпотентность, ошибки | unit + фейки портов | `internal/app/<appname>/..._test.go` |
+| `services/<appname>` | операции, оркестрация, транзакции, идемпотентность, ошибки | unit + фейки репозиториев | `internal/services/<appname>/..._test.go` |
+| `app/<appname>` | composition root, сборка и запуск | smoke или e2e | `tests/` |
 | `repository` | контракт порта | общий набор для всех реализаций | `internal/testkit/repositorytest` |
 | `infra/<adapter>` | валидация `Config` в `New`, SQL, маппинг, retry, timeout | unit для `New` + интеграционные с реальной системой | `internal/infra/<adapter>/..._test.go` |
-| `transport/<appname>` | разбор запроса, маппинг ошибок, коды | `httptest`, `bufconn`, фейковые сценарии | `internal/transport/..._test.go` |
+| `transport/<appname>` | разбор запроса, маппинг ошибок, коды | `httptest`, `bufconn`, фейковые операции | `internal/transport/..._test.go` |
 | `platform/<pkg>` | парсинг, настройка, дефолты | unit | `internal/platform/..._test.go` |
 | `config` | парсинг env/файла, дефолты, перетирание env файлом | unit | `internal/config/..._test.go` |
 | `cmd/<appname>` | bootstrap и запуск | smoke или e2e | `tests/` |
