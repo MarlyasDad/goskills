@@ -1,4 +1,5 @@
 ## 2026-11-18
+- architecture: уточнены vertical slice, modular monolith и CQRS/event sourcing, примеры приведены к Go (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлен обзор слоистой, гексагональной, луковой, чистой архитектуры, DDD и связь с правилами проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - README: добавлено описание проекта, состав навыков и структура репозитория (Alexander Yudaev <yudaev.alex@gmail.com>)
 - AGENTS.md: заполнена проектная память goskills — структура, навыки, workflow, проверки, решения и безопасность (Alexander Yudaev <yudaev.alex@gmail.com>)
