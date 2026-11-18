@@ -1,4 +1,6 @@
 ## 2026-11-18
+- repo: закреплено правило писать текст для человека и агента — простые формулировки, расшифровка терминов (AGENTS.md, skill-creator, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
+- architecture: добавлены краткая формулировка и словарь терминов, уточнён composition root и роль cmd (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: уточнены vertical slice, modular monolith и CQRS/event sourcing, примеры приведены к Go (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлен обзор слоистой, гексагональной, луковой, чистой архитектуры, DDD и связь с правилами проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - README: добавлено описание проекта, состав навыков и структура репозитория (Alexander Yudaev <yudaev.alex@gmail.com>)
