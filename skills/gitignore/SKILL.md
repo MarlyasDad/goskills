@@ -55,7 +55,7 @@ metadata:
 
 ```bash
 git check-ignore -v configs/.env.example   # пусто — файл коммитится
-git check-ignore -v configs/.env.dev       # правило найдено — локальный скрыт
+git check-ignore -v configs/.env.local       # правило найдено — локальный скрыт
 git status --ignored
 ```
 

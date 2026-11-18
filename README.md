@@ -49,16 +49,16 @@ OpenCode и попросите агента собрать каркас:
 - `internal/config/` — общий конфиг модуля: `Config`, `Load()`, чтение env;
 - `internal/platform/logger/` — примитивы;
 - `configs/.env.example` — шаблон переменных окружения;
-- `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`;
+- `Makefile` — один на модуль: `build-<app>`, `run-<app>`, `build-all`, `test`, `test-race`, `lint`;
 - `AGENTS.md`, `.gitignore`, `.agentignore`, `README.md`.
 
 Служебные файлы корня создаются по отдельным навыкам: `makefile`,
 `gitignore`, `agentignore`.
 
 Конфиг один на модуль: `internal/config` — общее зеркало конфиг-файла, без
-деления по приложениям. В k8s значения приходят из env; локально путь можно
-передать флагом `-config`: файл загружается в env и перетирает уже заданные
-переменные, дальше `Load()` работает одинаково.
+деления по приложениям. В k8s значения приходят из env; локально —
+`make run-<app>` с `-config configs/.env.local`: файл загружается в env и
+перетирает уже заданные переменные, дальше `Load()` работает одинаково.
 
 Это и есть необходимый минимум каталогов. Слои `internal/domain`,
 `internal/services`, `internal/repository`, `internal/infra`,

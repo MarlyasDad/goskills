@@ -128,13 +128,13 @@ metadata:
    Импорт `infra`, `transport`, `config`, `platform` — только в `app.go`.
 7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → `app.New` →
    сигналы ОС → `Run` и graceful shutdown. Адаптеры здесь не создаются.
-8. **Команды.** `Makefile` по `skills/makefile`: `build`, `run`, `test`,
-   `test-race`, `lint`.
+8. **Команды.** `Makefile` по `skills/makefile`: `build-<app>`, `run-<app>`,
+   `build-all`, `test`, `test-race`, `lint`, `help`.
 9. **AGENTS.md.** Обзор проекта, команды из `Makefile`, правило «тесты по
    `skills/testing`», границы. Если модуль короткий — причина выбора имени.
    Если файл уже есть — слить, а не перезаписать.
 10. **Проверка.** `go build ./...`, `go vet ./...`, `go test ./...`,
-    `make build`.
+    `make build-all`.
 
 ## Минимальная реализация
 
@@ -355,8 +355,10 @@ func main() {
 ### Makefile
 
 Создаётся по `skills/makefile`: `skills/makefile/references/Makefile` →
-корень проекта, заменить `<appname>`. Обязательный минимум: `build`, `run`,
-`test`, `test-race`, `lint`. `bin/` не коммитится.
+корень проекта. Один файл на модуль, заменить `APPS` на приложения.
+Обязательный минимум: `build-<app>`, `run-<app>`, `build-all`, `test`,
+`test-race`, `lint`, `help`. `run-<app>` передаёт
+`-config configs/.env.local`; `bin/` не коммитится.
 
 ### .gitignore
 
@@ -381,8 +383,8 @@ SHUTDOWN_TIMEOUT=10s
 
 ### README.md
 
-Минимум: назначение проекта, требования (Go), запуск (`make run`), переменные
-окружения со ссылкой на `configs/.env.example`, команды `make`.
+Минимум: назначение проекта, требования (Go), запуск (`make run-<app>`),
+переменные окружения со ссылкой на `configs/.env.example`, команды `make`.
 
 ### AGENTS.md
 
@@ -406,13 +408,14 @@ SHUTDOWN_TIMEOUT=10s
 go build ./...
 go vet ./...
 go test ./...
-make build
+make build-all
 ```
 
 Ожидания:
 
 - `go.mod` содержит только `module` и `go`, без зависимостей.
-- `go build` создаёт бинарь, `make run` запускается и завершается по Ctrl+C.
+- `make build-all` создаёт бинарь, `make run-<appname>` запускается и
+  завершается по Ctrl+C.
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
 - `internal/platform` не импортирует пакеты проекта.
 - `internal/config` — один пакет на модуль, без подкаталогов по приложениям.

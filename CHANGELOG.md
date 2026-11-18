@@ -1,4 +1,6 @@
 ## 2026-11-18
+- makefile: цели с именем приложения build-<app>/run-<app>, APPS, LOCAL_BIN; версия Go только в go.mod, локальный конфиг configs/.env.local (Alexander Yudaev <yudaev.alex@gmail.com>)
+- config: локальный env-файл зафиксирован как configs/.env.local (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: добавлен навык и эталонный Makefile для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - gitignore: добавлен навык и эталонный .gitignore для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agentignore: добавлен навык и эталонный .agentignore для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)

@@ -1,6 +1,6 @@
 ---
 name: makefile
-description: Правила Makefile Go-проекта: обязательные команды build, run, test, test-race, lint, имя приложения и бинаря, локальный запуск с конфигом. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing.
+description: Правила Makefile Go-проекта: один файл на модуль, цели с именем приложения build-<app> и run-<app>, локальный конфиг, тесты, lint и инструменты в bin/. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing.
 license: MIT
 compatibility: opencode
 metadata:
@@ -11,68 +11,87 @@ metadata:
 # Makefile Go-проекта
 
 Навык отвечает на вопрос «**какие команды есть у проекта и как они
-называются**». Раскладка каталогов — в `skills/project-structure`; что и как
-тестировать — в `skills/testing`; конфиг — в `skills/config`.
+называются**». Раскладка каталогов — в `skills/project-structure`; тесты — в
+`skills/testing`; конфиг — в `skills/config`.
 
 ## Файл
 
-- Имя — `Makefile`, лежит в **корне проекта**, рядом с `go.mod`.
-- Один файл на модуль, а не на приложение.
-- `make` без цели показывает список команд или собирает приложение — но не
-  запускает тесты и не деплоит.
+- Имя — `Makefile`, лежит в **корне модуля**, рядом с `go.mod`.
+- **Один `Makefile` на модуль/workspace**, а не на каждое приложение.
+- Цели сборки и запуска содержат имя приложения: `build-<app>`,
+  `run-<app>`. По имени цели сразу понятно, что запускается.
+- `make` без аргументов показывает `help`, а не собирает случайное
+  приложение.
 
 ## Обязательные цели
 
 | Цель | Что делает |
 |---|---|
-| `build` | `go build -o bin/<appname> ./cmd/<appname>` |
-| `run` | `go run ./cmd/<appname>`, аргументы — через `ARGS` |
+| `help` | список приложений и команд, цель по умолчанию |
+| `build-<app>` | `go build -o bin/<app> ./cmd/<app>` |
+| `run-<app>` | `go run ./cmd/<app> -config configs/.env.local` |
+| `build-all` | собрать все приложения из `APPS` |
 | `test` | `go test ./...` |
 | `test-race` | `go test -race -shuffle=on -count=1 ./...` |
-| `lint` | `go vet ./...`; если в проекте есть `golangci-lint` — он |
+| `lint` | `go vet ./...`; если есть `golangci-lint` — он |
 
-Дополнительно, по необходимости: `fmt`, `tidy`, `clean`.
+Дополнительно: `fmt`, `tidy`, `tools`, `clean`.
 
 ## Переменные
 
 ```make
-APP ?= <appname>
-GO  ?= go
-BIN := bin/$(APP)
+APPS := creator api
+LOCAL_BIN := $(CURDIR)/bin
 ```
 
-- `APP` — имя приложения и бинаря. Совпадает с `cmd/<appname>/` и
-  `bin/<appname>`.
-- Приложений несколько — `make build APP=api`, один `Makefile` на модуль.
-- `GO` — позволяет подменить компилятор, не хардкодить путь.
-- `ARGS` — аргументы запуска: `make run ARGS="-config configs/.env.dev"`.
+- `APPS` — список приложений модуля. Из него строятся `build-all` и `help`.
+- `LOCAL_BIN` — `bin/` в корне проекта. Туда кладутся бинари приложений и
+  Go-инструменты: `protoc`-плагины, `mockery`, `swag`, `goose` и прочее.
+  `GOBIN=$(LOCAL_BIN) go install ...` не засоряет глобальный `GOPATH`, а
+  `bin/` уже в `.gitignore`.
+- Отдельных `APP`, `GO`, `BIN`, `ARGS` нет: приложение задаётся в имени цели,
+  компилятор — `go` из `PATH`, локальный конфиг вшит в `run-<app>`.
+
+## Версия Go
+
+- В `Makefile` **нет** версии Go и нет переменной вроде `GO_VERSION`.
+- Версия живёт в `go.mod` (`go`/`toolchain`) и обновляется там.
+- Команды вызывают `go` из `PATH`. Подменить бинарь при необходимости можно
+  разово: `make test GO=/path/to/go`, но версия в `Makefile` не фиксируется.
 
 ## Правила
 
 - Агент берёт команды из `Makefile`, а не придумывает свои.
-- `build` кладёт артефакт в `bin/`; `bin/` не коммитится.
+- `build-<app>` кладёт артефакт в `bin/<app>`; `bin/` не коммитится.
+- `run-<app>` всегда использует `configs/.env.local`; в k8s конфиг приходит
+  из env, Makefile там не участвует.
 - `test` не ходит в сеть. Интеграционные тесты — отдельная цель, если нужны
   внешние сервисы (`test-integration`).
 - `lint` не форматирует код; форматирование — `fmt`.
 - Секреты и деплой в `Makefile` не хранятся.
-- Цели не дублируют `go`-команды из CI: CI вызывает `make`.
+- Не делать отдельный `Makefile` в `cmd/<app>/`: цели с именем приложения
+  решают ту же задачу в одном файле.
 
 ## Эталон
 
-Готовый файл — `references/Makefile`. Скопировать в корень проекта и заменить
-`<appname>`.
+Готовый файл — `references/Makefile`. Скопировать в корень проекта, заменить
+`APPS` на приложения модуля и зафиксировать версии инструментов вместо
+`@latest`.
 
 ## Проверка
 
 ```bash
-make build
+make help
+make build-creator
+make run-creator
 make test
 make lint
 ```
 
 Ожидания:
 
-- бинарь появился в `bin/<appname>`;
-- `make run ARGS="-config ..."` передаёт флаг приложению;
+- `make help` показывает список приложений;
+- бинарь появился в `bin/<app>`;
+- `make run-<app>` передаёт `-config configs/.env.local`;
 - `make test` проходит без сети;
-- в `Makefile` нет команд, которых нет в проекте.
+- в `Makefile` нет версии Go и команд, которых нет в проекте.

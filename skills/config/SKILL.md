@@ -224,7 +224,7 @@ cfg, err := config.Load()
 - существующие env перетираются — это ожидаемо;
 - `Load()` читает уже готовое окружение;
 - путь и содержимое файла не логируются;
-- сам файл с секретами (`configs/.env.dev`) — в `.gitignore`.
+- сам файл с секретами (`configs/.env.local`) — в `.gitignore`.
 
 ```go
 // internal/config/file.go — формат разбирает parseFile
