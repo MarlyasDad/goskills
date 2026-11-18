@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Правила тестирования Go-проекта: unit, интеграционные и e2e-тесты, фейки, покрытие, CI. Используется при написании или ревью тестов. Не описывает раскладку каталогов — это в skills/project-structure.
+description: "Правила тестирования Go-проекта: unit, интеграционные и e2e-тесты, фейки, покрытие, CI. Используется при написании или ревью тестов. Не описывает раскладку каталогов — это в skills/project-structure."
 license: MIT
 compatibility: opencode
 metadata:

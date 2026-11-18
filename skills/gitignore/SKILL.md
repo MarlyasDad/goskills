@@ -1,6 +1,6 @@
 ---
 name: gitignore
-description: Правила .gitignore Go-проекта: что не коммитить, секреты и локальные конфиги, артефакты сборки, проверка ignore-правил. Используется при создании .gitignore или добавлении файлов в репозиторий. Раскладка — skills/project-structure, конфиг — skills/config.
+description: "Правила .gitignore Go-проекта: что не коммитить, секреты и локальные конфиги, артефакты сборки, проверка ignore-правил. Используется при создании .gitignore или добавлении файлов в репозиторий. Раскладка — skills/project-structure, конфиг — skills/config."
 license: MIT
 compatibility: opencode
 metadata:

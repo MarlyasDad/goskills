@@ -1,6 +1,6 @@
 ---
 name: makefile
-description: Правила Makefile Go-проекта: один файл на модуль, цели с именем приложения build-<app> и run-<app>, локальный конфиг, тесты, lint и инструменты в bin/. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing.
+description: "Правила Makefile Go-проекта: один файл на модуль, цели с именем приложения build-<app> и run-<app>, локальный конфиг, тесты, lint и инструменты в bin/. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing."
 license: MIT
 compatibility: opencode
 metadata:

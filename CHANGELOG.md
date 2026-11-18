@@ -1,4 +1,7 @@
 ## 2026-11-18
+- agents-md: добавлены каркас AGENTS.md и правила ведения проектной памяти (Alexander Yudaev <yudaev.alex@gmail.com>)
+- skill-creator: добавлен навык создания скиллов с проверкой YAML frontmatter (Alexander Yudaev <yudaev.alex@gmail.com>)
+- skills: description во frontmatter закавычен — исправлена ошибка YAML в makefile и остальных навыках (Alexander Yudaev <yudaev.alex@gmail.com>)
 - README: добавлены права OpenCode для секретов; .agentignore не читается OpenCode, правила переносятся в permissions (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: mockery + testify стали тестовым стеком по умолчанию; stdlib и ручные моки — только по явному запросу (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: добавлена цель .bin-deps; бинарь добавляется вместе с пакетом, который его требует (Alexander Yudaev <yudaev.alex@gmail.com>)

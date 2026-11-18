@@ -1,6 +1,6 @@
 ---
 name: commit-conventions
-description: Use when creating git commits. Follows Conventional Commits format.
+description: "Use when creating git commits. Follows Conventional Commits format."
 license: MIT
 compatibility: opencode
 metadata:

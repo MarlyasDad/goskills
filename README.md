@@ -73,7 +73,7 @@ OpenCode и попросите агента собрать каркас:
 выводится из имени репозитория. Правила — в навыке `project-structure`.
 
 Агент загрузит `bootstrap`, `project-structure`, `architecture`, `config`,
-`testing` и создаст минимальный работающий каркас:
+`testing`, `agents-md` и создаст минимальный работающий каркас:
 
 - `go.mod` — имя модуля и версия Go, `testify` для тестов;
 - локальный git-конфиг с именем и email разработчика;
@@ -98,4 +98,5 @@ OpenCode и попросите агента собрать каркас:
 `internal/transport`, `internal/shared`, а также `tests/` и `api/`
 появляются вместе с первым файлом в них — пустые каталоги не создаются.
 Дальнейшие шаги агент выполняет по навыкам `project-structure`,
-`architecture`, `config` и `testing`.
+`architecture`, `config` и `testing`. Новый навык оформляется по
+`skills/skill-creator`.

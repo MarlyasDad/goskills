@@ -1,6 +1,6 @@
 ---
 name: changelog
-description: Use when updating CHANGELOG.md after changes or when user asks about release notes.
+description: "Use when updating CHANGELOG.md after changes or when user asks about release notes."
 license: MIT
 compatibility: opencode
 metadata:

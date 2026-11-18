@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: Правила зависимостей и границ между слоями Go-проекта (domain, services, app, repository, infra, transport, platform, cmd). Используется при добавлении нового пакета, адаптера или при ревью импортов. Не описывает, где лежит файл — это в skills/project-structure.
+description: "Правила зависимостей и границ между слоями Go-проекта (domain, services, app, repository, infra, transport, platform, cmd). Используется при добавлении нового пакета, адаптера или при ревью импортов. Не описывает, где лежит файл — это в skills/project-structure."
 license: MIT
 compatibility: opencode
 metadata:

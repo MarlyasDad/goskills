@@ -1,6 +1,6 @@
 ---
 name: config
-description: Правила конфигурации Go-проекта: env в k8s и локальный env-файл по флагу, общий Config на модуль, композиция из локальных Config адаптеров, валидация в конструкторе и секреты. Используется при добавлении настройки или адаптера. Раскладка — skills/project-structure, импорты — skills/architecture.
+description: "Правила конфигурации Go-проекта: env в k8s и локальный env-файл по флагу, общий Config на модуль, композиция из локальных Config адаптеров, валидация в конструкторе и секреты. Используется при добавлении настройки или адаптера. Раскладка — skills/project-structure, импорты — skills/architecture."
 license: MIT
 compatibility: opencode
 metadata:

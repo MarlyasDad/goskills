@@ -1,6 +1,6 @@
 ---
 name: prompt-engineering
-description: Use when creating or editing LLM prompts or when optimizing for prompt-cache hits.
+description: "Use when creating or editing LLM prompts or when optimizing for prompt-cache hits."
 license: MIT
 compatibility: opencode
 metadata:
