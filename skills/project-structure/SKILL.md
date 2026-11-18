@@ -374,6 +374,24 @@ go mod init <module>
 
 Пустые каталоги на любом шаге не создаются.
 
+### Чек-лист согласованности имён
+
+После переименования модуля или приложения проверить:
+
+- В коде не осталось старого пути импорта:
+  ```bash
+  grep -rn "<префикс старого модуля>" --include=*.go .
+  ```
+  Вывод пустой.
+- `<appname>` одинаков в `cmd/<appname>/`, `internal/app/<appname>/`,
+  `internal/config/<appname>/`, `internal/transport/<appname>/`.
+- Имя бинаря совпадает везде, где оно задаётся:
+  - `Makefile` — `go build -o bin/<appname>`;
+  - `Dockerfile` — `go build -o`, `COPY` собранного файла, `ENTRYPOINT`;
+  - `swag init -g` — путь к `main.go` приложения;
+  - CI и k8s-манифесты — имя контейнера и артефакта.
+- `go build ./...` проходит.
+
 ## Границы с architecture
 
 - «Где лежит файл» — этот навык.
