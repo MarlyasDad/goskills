@@ -11,7 +11,8 @@ metadata:
 # Структура Go-проекта
 
 Навык отвечает на вопрос «**где лежит файл**» и «**как инициализировать проект**».
-Вопрос «**что может импортировать**» — в `skills/architecture`.
+Вопрос «**что может импортировать**» — в `skills/architecture`; «**как
+читать и собирать конфиг**» — в `skills/config`.
 
 ## Имя модуля и имя приложения
 
@@ -235,9 +236,9 @@ go mod init <module>
 - Один подкаталог — один внешний сервис или технология, самодостаточный.
 - Реализации репозиториев для БД — `internal/infra/postgres/`,
   `internal/infra/redis/` и т.п. (создаются по необходимости).
-- `config.go` рядом с адаптером — локальный `Config`: поля, env-теги,
-  дефолты и валидация. Конструктор (`New`, `NewClient`) принимает его
-  аргументом; адаптер не импортирует конфиг приложения.
+- `config.go` рядом с адаптером — локальный `Config`: поля и валидация.
+  Конструктор (`New`, `NewClient`) принимает его аргументом; адаптер не
+  читает env и не импортирует конфиг приложения. Правила — `skills/config`.
 - Входящих хендлеров и бизнес-правил здесь нет.
 
 ### internal/transport/<appname>/
@@ -260,82 +261,10 @@ go mod init <module>
 
 ### internal/config/
 
-- Один пакет на модуль, без деления на `<appname>`: конфиг-файл и набор env
-  общие для всех приложений.
-- `config.go` — `Config`, зеркало конфиг-файла, и `Load() (*Config, error)`.
-  `Config` — композиция: общие настройки (`Env`, `ShutdownTimeout`) и
-  локальные конфиги адаптеров (`postgres.Config`, `kafka.Config`). Поля
-  адаптеров здесь не повторяются.
-- `env.go` — примитивы чтения env (`String`, `Duration`, `Int`). Env —
-  единый runtime-интерфейс: в k8s значения приходят из ConfigMap/Secret.
-- `file.go` — локальный источник: по флагу `-config` файл читается и
-  выставляется в env, не перетирая уже заданные переменные. Дальше `Load()`
-  работает так же, как в k8s. Формат файла выбирает проект.
-- `Load()` разбирает все секции, но не требует настройки неиспользуемых
-  адаптеров. Обязательные поля проверяет тот, кто использует конфиг:
-  `cfg.Postgres.Validate()` перед `postgres.New` или сам конструктор.
-- Импортируется только из `cmd/<appname>`; не импортирует `app/`, `domain/`,
-  `transport/`.
-
-```go
-// internal/infra/postgres/config.go — локальная схема, без env
-package postgres
-
-import "fmt"
-
-type Config struct {
-	DSN      string
-	MaxConns int
-}
-
-func (c Config) Validate() error {
-	if c.DSN == "" {
-		return fmt.Errorf("postgres: DSN is required")
-	}
-	if c.MaxConns <= 0 {
-		return fmt.Errorf("postgres: MaxConns must be positive")
-	}
-	return nil
-}
-```
-
-```go
-// internal/config/config.go — одно зеркало конфиг-файла на весь модуль
-package config
-
-import (
-	"fmt"
-	"time"
-
-	"<module>/internal/infra/postgres"
-)
-
-type Config struct {
-	Env             string
-	ShutdownTimeout time.Duration
-	Postgres        postgres.Config
-}
-
-func Load() (*Config, error) {
-	timeout, err := Duration("SHUTDOWN_TIMEOUT", 10*time.Second)
-	if err != nil {
-		return nil, fmt.Errorf("shutdown timeout: %w", err)
-	}
-	maxConns, err := Int("DB_MAX_CONNS", 10)
-	if err != nil {
-		return nil, fmt.Errorf("DB_MAX_CONNS: %w", err)
-	}
-
-	return &Config{
-		Env:             String("APP_ENV", "local"),
-		ShutdownTimeout: timeout,
-		Postgres: postgres.Config{
-			DSN:      String("DB_DSN", ""),
-			MaxConns: maxConns,
-		},
-	}, nil
-}
-```
+- Один пакет на модуль, без деления на `<appname>`.
+- `config.go` — общий `Config` и `Load()`; `env.go` — чтение env; `file.go` —
+  локальный файл по флагу `-config` (добавляется, когда нужен запуск вне k8s).
+- Источники, приоритеты, композиция, валидация и секреты — `skills/config`.
 
 ### internal/shared/
 
@@ -357,6 +286,7 @@ func Load() (*Config, error) {
 - Локально путь передаётся флагом `-config` и загружается в env; в k8s
   значения приходят из ConfigMap/Secret, без файла.
 - Реальные файлы с секретами не коммитятся (`configs/*.local.*`).
+- Правила источников и приоритетов — `skills/config`.
 
 ### tests/
 
@@ -519,10 +449,11 @@ func Load() (*Config, error) {
 После вставки действует тот же чек-лист: grep по старому префиксу модуля
 даёт пустой вывод, `go build ./...` проходит.
 
-## Границы с architecture
+## Границы
 
 - «Где лежит файл» — этот навык.
 - «Что может импортировать» — `skills/architecture`.
+- «Как читать и собирать конфиг» — `skills/config`.
 - Если правило отвечает на вопрос «какой каталог» — оно здесь.
 - Если «какая зависимость допустима» — оно в `skills/architecture`.
-  Не дублировать.
+- Если «откуда взялось значение» — оно в `skills/config`. Не дублировать.

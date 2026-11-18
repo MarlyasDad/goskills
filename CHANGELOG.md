@@ -1,4 +1,5 @@
 ## 2026-11-18
+- config: добавлен навык конфигурации — источники env/файл, общий Config на модуль, композиция, валидация и секреты (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: один общий конфиг модуля в internal/config без деления на app, env перенесён из platform; локальный файл по флагу -config (project-structure, architecture, bootstrap, testing, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: сборка конфига приложения перенесена в internal/config/<appname>, platform остаётся без зависимостей от проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: конфиг приложения собирается композицией в internal/platform/config/<appname>, локальные Config — в адаптерах (project-structure, architecture, bootstrap, testing, README) (Alexander Yudaev <yudaev.alex@gmail.com>)
