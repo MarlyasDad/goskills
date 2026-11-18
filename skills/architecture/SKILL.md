@@ -29,9 +29,9 @@ metadata:
 Следствия:
 
 - `domain` не знает ни о чём, кроме себя.
-- Сервисы в `services/<appname>` реализуют use case: оркестрируют домен и
-  репозитории, не знают, откуда пришёл вызов и куда уйдут данные. Отдельный
-  пакет под use case не нужен.
+- Сервисы в `services/<appname>/<service>` реализуют use case: оркестрируют
+  домен и репозитории, не знают, откуда пришёл вызов и куда уйдут данные.
+  Отдельный пакет под use case не нужен.
 - `app/<appname>/app.go` — composition root приложения: создаёт адаптеры,
   сервисы и транспорт, запускает и останавливает приложение.
 - `infra` и `transport` не знают друг о друге. Связывает их `app.go`.
@@ -139,7 +139,7 @@ metadata:
 - Живёт в application-слое:
   - одна-две саги — файл в `services/<appname>/` (`saga_register.go`);
   - много саг — подпакет `services/<appname>/sagas/`. Он может импортировать
-    сервисы родительского пакета, но родитель его не импортирует; связывает
+    сервисы из соседних пакетов, но они не импортируют `sagas`; связывает
     `app.go`;
   - сага, общая для приложений, — отдельный application-пакет, не `infra`.
 - Не в `infra` и не в `transport`.
@@ -171,9 +171,9 @@ metadata:
 - **Сервис** — в этом навыке два разных:
   - **доменный сервис** — правило или расчёт над несколькими агрегатами,
     который не принадлежит одной сущности. Живёт в
-    `internal/services/<appname>`, без SQL, HTTP и знаний о БД;
+    `internal/services/<appname>/<service>`, без SQL, HTTP и знаний о БД;
   - **сервис приложения** — реализация use case: операция и оркестрация
-    домена, репозиториев и транзакций в `services/<appname>`. Это не
+    домена, репозиториев и транзакций в `services/<appname>/<service>`. Это не
     composition root: сборка адаптеров — в `app.go`.
 - **Bounded context** — граница модели и языка; внутри неё термины имеют одно
   значение.
@@ -210,7 +210,7 @@ metadata:
 | Наши правила | Что заимствовано |
 |---|---|
 | `domain` — чистый, без I/O | тактический DDD, ядро Clean/onion |
-| `services/<appname>` — операции и оркестрация | use cases Clean = application services onion |
+| `services/<appname>/<service>` — операции и оркестрация | use cases Clean = application services onion |
 | `repository` — интерфейсы портов | гексагональная, DDD-репозитории |
 | `app/<appname>/app.go` — сборка адаптеров и сервисов | composition root |
 | `infra` — driven-адаптеры | гексагональная |
@@ -223,13 +223,15 @@ metadata:
 
 - `app/<appname>` содержит только `app.go` с composition root; бизнес-логики
   и сценариев там нет.
-- `services/<appname>` — сервисы приложения: реализуют use case, оркестрируют
-  домен, репозитории и транзакции. Отдельный пакет под use case не вводится.
+- `services/<appname>/<service>` — сервисы приложения: реализуют use case,
+  оркестрируют домен, репозитории и транзакции. Отдельный пакет под use case
+  не вводится.
 - `app.go` импортирует `infra`, `transport`, `services`, `config`,
   `platform`: это composition root приложения.
 - `config` импортирует `Config` адаптеров; обратного импорта нет.
 - `transport` объявляет интерфейсы операций, чтобы не было цикла
-  `app → transport → app`; реализуют их сервисы из `services/<appname>`.
+  `app → transport → app`; реализуют их сервисы из
+  `services/<appname>/<service>`.
 - `platform` не импортирует пакеты проекта.
 - CQRS, event sourcing, vertical slices и полный набор DDD-паттернов не
   обязательны; добавляются по потребности.
@@ -239,7 +241,7 @@ metadata:
 | Слой | Пакет | Ответственность |
 |---|---|---|
 | Домен | `internal/domain` | сущности, value objects, инварианты |
-| Сервисы приложения | `internal/services/<appname>` | операции, оркестрация домена и репозиториев |
+| Сервисы приложения | `internal/services/<appname>/<service>` | операции, оркестрация домена и репозиториев |
 | Порты данных | `internal/repository` | интерфейсы репозиториев |
 | Сборка приложения | `internal/app/<appname>` | только `app.go`: composition root |
 | Исходящие адаптеры | `internal/infra/<adapter>` | клиенты БД, HTTP, gRPC, Kafka, MinIO |
@@ -254,7 +256,7 @@ metadata:
 | Пакет | Может импортировать | Не может импортировать |
 |---|---|---|
 | `internal/domain` | stdlib, чистые библиотеки типов (`uuid`, `decimal`) | всё остальное, включая `platform` и `shared` |
-| `internal/services/<appname>` | `domain`, `repository`, `shared` | `app`, `infra`, `transport`, `platform`, `config`, `cmd` |
+| `internal/services/<appname>/<service>` | `domain`, `repository`, `shared` | `app`, `infra`, `transport`, `platform`, `config`, `cmd` |
 | `internal/repository` | `domain`, stdlib (`context`) | `services`, `app`, `infra`, `transport`, `platform`, `config`, `cmd` |
 | `internal/app/<appname>` | `domain`, `services`, `repository`, `infra`, `transport`, `platform`, `shared`, `config` | `cmd`, `app/<other>` |
 | `internal/infra/<adapter>` | `domain`, `repository`, `platform`, сторонние клиенты | `app`, `services`, `transport`, `config`, `cmd` |
@@ -275,9 +277,15 @@ metadata:
 - Никакой сериализации, SQL, HTTP, логгеров и конфигурации.
 - Если домену нужны данные извне — он получает их аргументами или через порт.
 
-### services/<appname>
+### services/<appname>/<service>/
 
-- Сервисы приложения: операции, оркестрация домена, репозиториев и транзакций.
+- Каталог на сервис: `user/`, `subscription/`, `report/`.
+- `ports.go` — интерфейсы, которые нужны сервису: репозитории, часы, внешние
+  порты. Только нужное этому сервису.
+- `service.go` — структура сервиса и `New(deps) *Service`.
+- `dto.go` — `Input`/`Output` для методов; `Request`/`Response` остаются на
+  транспорте.
+- `register.go`, `unregister.go` — по одному use case на файл.
 - Сервис группирует родственные use cases. Например, `OnboardingUser` и
   `RemoveUser` — два use case одного `UserService`. Не сваливать в один
   сервис несвязанные сценарии.
@@ -286,7 +294,7 @@ metadata:
 - `domain`, `repository`, `shared`.
 - Не знает про HTTP-коды, SQL, Kafka-топики и конкретные адаптеры.
 - Если нужен логгер, часы или другой внешний эффект — объявить маленький
-  интерфейс здесь и принять его в конструкторе. Реализацию даст `app.go`.
+  интерфейс в `ports.go` и принять его в конструкторе. Реализацию даст `app.go`.
 
 ### repository
 
@@ -324,7 +332,7 @@ metadata:
 - Не импортирует `app`: `app.go` создаёт транспорт, поэтому `app → transport`;
   обратный импорт даёт цикл.
 - Не импортирует `services`: интерфейс операции объявляется здесь, реализует
-  сервис из `services/<appname>`, связывает `app.go`.
+  сервис из `services/<appname>/<service>`, связывает `app.go`.
 - Не ходит в `repository` и `infra` напрямую: это обход сервиса.
 
 ### platform/<pkg>
@@ -363,7 +371,7 @@ metadata:
 
 - Интерфейс объявляет **потребитель**, а не реализация. `repository` — это
   порты данных; операции, которые вызывает `transport`, объявляются в
-  `transport` и реализуются сервисами из `services/<appname>`.
+  `transport` и реализуются сервисами из `services/<appname>/<service>`.
 - Интерфейс создаётся, когда есть потребитель и вторая реализация (или
   тест-двойник). «На будущее» интерфейсы не плодятся.
 - Реализация не импортирует потребителя. Связывает их `app.go`.
@@ -376,7 +384,7 @@ metadata:
   `<b>`; `transport/<a>` — `transport/<b>`.
 - `cmd/<a>` запускает только `app/<a>`; чужие приложения не импортируются.
 - Общий код приложений живёт в `domain`, `repository`, `infra`, `platform`,
-  `shared`, `config`. Прикладные сервисы — в `services/<appname>`.
+  `shared`, `config`. Сервисы — в `services/<appname>/<service>`.
 - Конфиг один на модуль: `config.Config` общий, каждое приложение берёт свои
   секции. Локальные конфиги адаптеров (`postgres.Config`) вкладываются, а не
   копируются.
@@ -394,13 +402,13 @@ metadata:
 | `transport` импортирует `app` | цикл с `app.go` | интерфейс в `transport`, реализация в `services` |
 | `transport` импортирует `services` | адаптер привязан к реализации | интерфейс в `transport`, связывание в `app.go` |
 | `services` импортирует `infra`/`transport` | сервис привязан к адаптеру | порт и реализация на краю |
-| в `app` появилась бизнес-логика | DI смешивается со сценариями | оркестрация в `services/<appname>` |
+| в `app` появилась бизнес-логика | DI смешивается со сценариями | оркестрация в `services/<appname>/<service>` |
 | `cmd` создаёт адаптеры или сервисы | DI размазывается по двум местам | всё создание в `app.go` |
 | `cmd` валидирует секции конфига | ломает приложение без этой зависимости | `Validate()` внутри `New` адаптера |
 | `app/<a>` импортирует `app/<b>` | приложения слипаются | общий код в `domain`/`shared` |
 | `shared` импортирует `infra` | свалка и обратная стрелка | тип переносится в `infra` |
 | `repository` импортирует `infra` | цикл порта и реализации | интерфейс отдельно, реализация в `infra` |
-| `services/<appname>` импортирует `app` | обратная стрелка | `app.go` связывает сервисы и адаптеры |
+| `services/<appname>/<service>` импортирует `app` | обратная стрелка | `app.go` связывает сервисы и адаптеры |
 | `infra` импортирует `config` | адаптер зависит от схемы приложения | настройки аргументами, `Config` адаптера в его пакете |
 | сборка конфига дублирует поля адаптера | одно поле в двух местах рассинхронизируется | вложить `postgres.Config` в `Config` приложения |
 
@@ -442,7 +450,7 @@ go list -f '{{.ImportPath}}: {{join .Imports " "}}' ./... | grep 'internal/infra
 5. Новый порт объявлен у потребителя, а не у реализации?
 6. `cmd` остался тонким: конфиг, логгер, `app`, сигналы — и всё?
 7. Создание адаптеров только в `app.go`; `app` не содержит бизнес-логики?
-8. Оркестрация — в `services/<appname>`, без `infra`/`transport`?
+8. Оркестрация — в `services/<appname>/<service>`, без `infra`/`transport`?
 9. `Validate()` вызывается в `New`, а не в `Load()` или DI?
 10. Не тянет ли `platform` пакеты проекта и не дублирует ли `config` поля
     адаптеров?

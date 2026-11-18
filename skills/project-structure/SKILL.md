@@ -170,7 +170,12 @@ go mod init <module>
 │   ├── repository/
 │   ├── services/
 │   │   └── appname/
-│   │       └── service.go
+│   │       └── user/
+│   │           ├── ports.go
+│   │           ├── service.go
+│   │           ├── dto.go
+│   │           ├── register.go
+│   │           └── unregister.go
 │   ├── shared/
 │   └── transport/
 │       └── appname/
@@ -217,14 +222,21 @@ go mod init <module>
 - Не место для JSON/SQL-тегов, HTTP-кодов и сериализации: это детали
   транспорта и хранения.
 
-### internal/services/<appname>/
+### internal/services/<appname>/<service>/
 
-- Сервисы приложения: операции, оркестрация домена, репозиториев и транзакций.
-- Сюда же — доменные правила над несколькими агрегатами, если они не
-  помещаются в одну сущность.
-- Не содержит SQL, HTTP и знаний о конкретной БД; зависимости получает
-  через порты. Use case реализуется сервисом; отдельный пакет не нужен.
-- Один подкаталог на приложение: `services/<appname>/`.
+- Каталог на сервис: `user/`, `subscription/`, `report/`. Не сваливать все
+  сервисы приложения в один пакет.
+- `ports.go` — интерфейсы, которые нужны сервису: репозитории, часы, внешние
+  порты. Только нужное этому сервису; общие порты — в `repository`/`shared`.
+- `service.go` — структура сервиса и `New(deps) *Service`.
+- `dto.go` — `Input`/`Output` для методов (`RegisterInput`,
+  `RegisterOutput`). `Request`/`Response` остаются на транспорте; если проект
+  выбрал другую пару — придерживаться её во всём модуле.
+- `register.go`, `unregister.go` — по одному use case на файл. Тест —
+  `register_test.go` рядом.
+- Сервис оркестрирует домен, репозитории и транзакции; отдельного слоя
+  use-case нет.
+- Не содержит SQL, HTTP и знаний о конкретной БД; зависимости — через порты.
 
 ### internal/repository/
 
@@ -239,7 +251,8 @@ go mod init <module>
   транспорт из `Config`, связывает их, запускает и останавливает.
 - Импортирует `domain`, `services`, `repository`, `infra`, `transport`,
   `config`, `platform`.
-- Бизнес-логики и сценариев здесь нет: они в `domain` и `services/<appname>`.
+- Бизнес-логики и сценариев здесь нет: они в `domain` и
+  `services/<appname>/<service>`.
 
 ### internal/infra/
 
@@ -264,7 +277,7 @@ go mod init <module>
   консьюмеры и порты.
 - Слой тонкий: разобрать запрос → вызвать операцию сервиса → собрать ответ.
 - Не импортирует `app`: операция вызывается через интерфейс, объявленный
-  здесь; реализация — в `services/<appname>`, связывает `app.go`.
+  здесь; реализация — в `services/<appname>/<service>`, связывает `app.go`.
 
 ### internal/platform/
 
@@ -322,7 +335,7 @@ go mod init <module>
   `internal/services/<appname>/` и `internal/transport/<appname>/`.
 - Общий код приложений — `internal/domain/`, `internal/repository/`,
   `internal/infra/`, `internal/platform/`, `internal/shared/`,
-  `internal/config/`. Сервисы приложения — `internal/services/<appname>/`.
+  `internal/config/`. Сервисы приложения — `internal/services/<appname>/<service>/`.
 - Конфиг общий: один `internal/config` и один конфиг-файл на модуль. Каждое
   приложение берёт из `Config` только свои секции и валидирует только их;
   локальные конфиги адаптеров (`postgres.Config` и т.п.) вкладываются, а не
@@ -336,8 +349,9 @@ go mod init <module>
 | Что создаётся | Куда класть |
 |---|---|
 | Новая сущность или агрегат | `internal/domain/<entity-name>/` |
-| Правило над несколькими сущностями | `internal/services/<appname>/` |
-| Новая операция или сервис | `internal/services/<appname>/` |
+| Правило над несколькими сущностями | `internal/services/<appname>/<service>/` |
+| Новый сервис | `internal/services/<appname>/<service>/` |
+| Новая операция | `internal/services/<appname>/<service>/<method>.go` |
 | Интерфейс репозитория | `internal/repository/<entity>.go` |
 | Реализация репозитория (БД, кэш) | `internal/infra/<store>/` |
 | Локальный конфиг адаптера | `internal/infra/<adapter>/config.go` |
@@ -371,7 +385,7 @@ go mod init <module>
 - `internal/config/<appname>/` — конфиг один на модуль, деление по
   приложениям не нужно.
 - Бизнес-логику в `cmd/`, `internal/app/` и `internal/transport/`: в `app`
-  только DI, операции — в `services/<appname>/`.
+  только DI, операции — в `services/<appname>/<service>/`.
 - Не заводить отдельный пакет под use case: сценарий реализуется сервисом.
 - Создание адаптеров и сервисов в `cmd/` — это `app.go`.
 - Валидацию секций конфига в DI или `Load()` — это `New` адаптера.
@@ -407,8 +421,8 @@ go mod init <module>
    останов.
 7. `internal/domain/` — при появлении первой сущности.
 8. `internal/repository/`, `internal/infra/`,
-   `internal/services/<appname>/`, `internal/transport/` — при появлении
-   первого порта, операции и адаптера.
+   `internal/services/<appname>/<service>/`, `internal/transport/` — при
+   появлении первого порта, операции и адаптера.
 9. `Makefile`, `Dockerfile` — когда появляются команды сборки и деплой.
 10. `tests/` — при появлении первого интеграционного теста.
 

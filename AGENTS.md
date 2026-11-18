@@ -113,6 +113,8 @@ git diff --check
   локальные `Config` — в адаптерах, валидация в `New`.
 - `internal/app/<appname>/app.go` — DI приложения; `cmd` — только bootstrap,
   сигналы ОС и запуск/останов.
+- Сервисы — каталог на сервис: `services/<appname>/<service>/` с `ports.go`,
+  `service.go`, `dto.go` и файлом на операцию (`register.go`, `unregister.go`).
 - `Makefile` один на модуль/workspace, цели с именем приложения:
   `build-<app>`, `run-<app>`; версия Go только в `go.mod`.
 - Тестовый стек по умолчанию — `mockery` + `testify`; моки генерируются.

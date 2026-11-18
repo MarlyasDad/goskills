@@ -158,7 +158,7 @@ func New(cfg Config) (*Pool, error) {
 ```go
 // internal/app/creator/app.go
 type App struct {
-	svc *services.ReportService
+	svc *report.Service
 	log *slog.Logger
 }
 
@@ -168,7 +168,7 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("postgres: %w", err)
 	}
 	repo := postgres.NewRepo(pg)
-	svc := services.NewReportService(repo)
+	svc := report.New(repo)
 
 	return &App{svc: svc, log: log}, nil
 }
@@ -313,7 +313,7 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("postgres: %w", err)
 	}
 	repo := postgres.NewRepo(pg)
-	svc := services.NewReportService(repo)
+	svc := report.New(repo)
 
 	return &App{svc: svc, log: log}, nil
 }

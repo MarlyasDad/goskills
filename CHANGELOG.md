@@ -1,4 +1,5 @@
 ## 2026-11-18
+- services: сервис — каталог с ports.go, service.go, dto.go и файлом на операцию; закреплено в architecture, project-structure, testing, config, bootstrap и AGENTS.md (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: уточнено размещение саг — файл в services/<appname> для одной-двух, подпакет sagas для многих (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлен раздел про сагу — координатор распределённого процесса, не слой и не замена сервису (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: use case зафиксирован как название сценария (OnboardingUser, RemoveUser); сервис группирует несколько use cases (Alexander Yudaev <yudaev.alex@gmail.com>)

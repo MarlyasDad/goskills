@@ -155,7 +155,7 @@ OpenCode и попросите агента собрать каркас:
 перетирает уже заданные переменные, дальше `Load()` работает одинаково.
 
 Это и есть необходимый минимум каталогов. Слои `internal/domain`,
-`internal/services/<appname>`, `internal/repository`, `internal/infra`,
+`internal/services/<appname>/<service>`, `internal/repository`, `internal/infra`,
 `internal/transport`, `internal/shared`, а также `tests/` и `api/`
 появляются вместе с первым файлом в них — пустые каталоги не создаются.
 Дальнейшие шаги агент выполняет по навыкам `project-structure`,

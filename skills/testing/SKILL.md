@@ -66,7 +66,7 @@ metadata:
 | Слой | Что проверяем | Чем | Где |
 |---|---|---|---|
 | `domain` | инварианты, границы значений, ошибки | чистый unit, table-driven | `internal/domain/..._test.go` |
-| `services/<appname>` | операции, оркестрация, транзакции, идемпотентность, ошибки | unit + фейки репозиториев | `internal/services/<appname>/..._test.go` |
+| `services/<appname>/<service>` | операции, оркестрация, транзакции, идемпотентность, ошибки | unit + фейки репозиториев | `internal/services/<appname>/<service>/..._test.go` |
 | `app/<appname>` | composition root, сборка и запуск | smoke или e2e | `tests/` |
 | `repository` | контракт порта | общий набор для всех реализаций | `internal/testkit/repositorytest` |
 | `infra/<adapter>` | валидация `Config` в `New`, SQL, маппинг, retry, timeout | unit для `New` + интеграционные с реальной системой | `internal/infra/<adapter>/..._test.go` |
