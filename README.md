@@ -20,6 +20,39 @@
   а агент уже решает, какой из них загрузить.
 - обновление версии через `git pull`
 
+### .agentignore и права OpenCode
+
+OpenCode **не читает `.agentignore`** автоматически: такого поля в конфиге
+нет. Файл остаётся переносимым списком для инструментов, которые его
+поддерживают, и копируется в корень проекта.
+
+Для OpenCode те же правила задаются через `permissions`:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.example", "effect": "allow" },
+    { "action": "read", "resource": "*.key", "effect": "deny" },
+    { "action": "read", "resource": "*.pem", "effect": "deny" },
+    { "action": "read", "resource": "secrets/*", "effect": "deny" }
+  ]
+}
+```
+
+Правила применяются по последнему совпадению, поэтому `*.env.example` стоит
+после `*.env.*`. При необходимости добавьте такие же правила для `edit`.
+
+Подключить `skills/agentignore/references/.agentignore` через `instructions`
+или `references` нельзя: это не включает игнорирование, а просто отправляет
+текст агенту. Копия в корне нужна только инструментам, которые сами читают
+`.agentignore`.
+
+Если правил много, генерируйте `permissions` из `.agentignore` скриптом —
+иначе придётся поддерживать два списка вручную.
+
 ## Создание проекта с нуля
 
 После подключения навыков создайте каталог будущего проекта, откройте его в

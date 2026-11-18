@@ -1,4 +1,5 @@
 ## 2026-11-18
+- README: добавлены права OpenCode для секретов; .agentignore не читается OpenCode, правила переносятся в permissions (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: mockery + testify стали тестовым стеком по умолчанию; stdlib и ручные моки — только по явному запросу (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: добавлена цель .bin-deps; бинарь добавляется вместе с пакетом, который его требует (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: добавлена поддержка mockery и testify в каркасе, моки не пишутся руками (Alexander Yudaev <yudaev.alex@gmail.com>)
