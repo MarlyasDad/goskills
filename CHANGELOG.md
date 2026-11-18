@@ -1,4 +1,5 @@
 ## 2026-11-18
+- agents-md: перенесены workflow, иерархия правил, спеки vs навыки и безопасность из rd-hub-go (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: добавлены каркас AGENTS.md и правила ведения проектной памяти (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: добавлен навык создания скиллов с проверкой YAML frontmatter (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skills: description во frontmatter закавычен — исправлена ошибка YAML в makefile и остальных навыках (Alexander Yudaev <yudaev.alex@gmail.com>)
