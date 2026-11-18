@@ -140,6 +140,7 @@ go mod init <module>
 ├── Makefile
 ├── README.md
 ├── .gitignore
+├── .agentignore
 ├── api/
 ├── bin/
 ├── configs/
@@ -182,12 +183,14 @@ go mod init <module>
 ### Корень проекта
 
 - `go.mod` — имя модуля и версия Go. Единственный источник имени модуля.
-- `Makefile` — команды `build`, `test`, `lint`, `run`. Агент берёт команды
-  отсюда, а не придумывает свои.
+- `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`. Агент
+  берёт команды отсюда, а не придумывает свои. Правила — `skills/makefile`.
 - `Dockerfile` — сборка образа приложения.
 - `README.md` — как запустить проект и какие переменные окружения нужны.
-- `.gitignore` — минимум: `bin/`, `configs/.env.*`, `.env*`,
-  `!configs/.env.example`, `coverage.out`, `.idea/`, `.DS_Store`.
+- `.gitignore` — что не коммитить. Минимум: `bin/`, `configs/.env.*`, `.env*`,
+  IDE/OS; `configs/.env.example` коммитится. Правила — `skills/gitignore`.
+- `.agentignore` — что агент не читает: секреты, выгрузки, артефакты.
+  Правила — `skills/agentignore`.
 
 ### cmd/<appname>/
 
@@ -348,6 +351,7 @@ go mod init <module>
 | Unit-тест | рядом с кодом, `<file>_test.go` |
 | Общий прикладной тип для 2+ приложений | `internal/shared/` |
 | Код для внешних потребителей | `pkg/` — только если правда нужно |
+| Makefile, `.gitignore`, `.agentignore` | корень проекта; правила — `skills/makefile`, `skills/gitignore`, `skills/agentignore` |
 
 ## Что не создавать
 
@@ -466,6 +470,9 @@ go mod init <module>
 - «Где лежит файл» — этот навык.
 - «Что может импортировать» — `skills/architecture`.
 - «Как читать и собирать конфиг» — `skills/config`.
+- «Какие команды у проекта» — `skills/makefile`.
+- «Что не коммитить» — `skills/gitignore`; «что не читает агент» —
+  `skills/agentignore`.
 - Если правило отвечает на вопрос «какой каталог» — оно здесь.
 - Если «какая зависимость допустима» — оно в `skills/architecture`.
 - Если «откуда взялось значение» — оно в `skills/config`. Не дублировать.

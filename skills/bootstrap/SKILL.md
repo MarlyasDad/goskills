@@ -67,6 +67,7 @@ metadata:
 .
 ├── go.mod
 ├── .gitignore
+├── .agentignore
 ├── README.md
 ├── Makefile
 ├── AGENTS.md
@@ -111,7 +112,7 @@ metadata:
    `go` в `go.mod` соответствует выбранной версии и не ниже `1.26`.
    Зависимости на этом шаге не добавлять. Если модуль короткий (не
    импортируется) — зафиксировать причину в `README.md` или `AGENTS.md`.
-3. **Корневые файлы.** `.gitignore`, `README.md`,
+3. **Корневые файлы.** `.gitignore`, `.agentignore`, `README.md`,
    `configs/.env.example`.
    При коротком имени модуля — записать причину выбора в `README.md`.
 4. **Платформа.** `internal/platform/logger/logger.go` — создание логгера.
@@ -127,7 +128,8 @@ metadata:
    Импорт `infra`, `transport`, `config`, `platform` — только в `app.go`.
 7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → `app.New` →
    сигналы ОС → `Run` и graceful shutdown. Адаптеры здесь не создаются.
-8. **Команды.** `Makefile`: `build`, `run`, `test`, `test-race`, `lint`.
+8. **Команды.** `Makefile` по `skills/makefile`: `build`, `run`, `test`,
+   `test-race`, `lint`.
 9. **AGENTS.md.** Обзор проекта, команды из `Makefile`, правило «тесты по
    `skills/testing`», границы. Если модуль короткий — причина выбора имени.
    Если файл уже есть — слить, а не перезаписать.
@@ -352,41 +354,21 @@ func main() {
 
 ### Makefile
 
-```make
-APP := <appname>
-
-.PHONY: build run test test-race lint
-
-build:
-	go build -o bin/$(APP) ./cmd/$(APP)
-
-run:
-	go run ./cmd/$(APP)
-
-test:
-	go test ./...
-
-test-race:
-	go test -race -shuffle=on -count=1 ./...
-
-lint:
-	go vet ./...
-```
-
-`bin/` в git не коммитится.
+Создаётся по `skills/makefile`: `skills/makefile/references/Makefile` →
+корень проекта, заменить `<appname>`. Обязательный минимум: `build`, `run`,
+`test`, `test-race`, `lint`. `bin/` не коммитится.
 
 ### .gitignore
 
-```gitignore
-bin/
-configs/.env.*
-.env
-.env.*
-!configs/.env.example
-coverage.out
-.idea/
-.DS_Store
-```
+Создаётся по `skills/gitignore`: `skills/gitignore/references/.gitignore` →
+корень проекта. Минимум: `bin/`, `configs/.env.*`, `.env*`, IDE/OS;
+`configs/.env.example` коммитится.
+
+### .agentignore
+
+Создаётся по `skills/agentignore`: `skills/agentignore/references/.agentignore`
+→ корень проекта. Закрывает секреты, выгрузки, артефакты и IDE-файлы от
+чтения агентом. Правила секретов дублируются в `.gitignore`.
 
 ### configs/.env.example
 
@@ -436,6 +418,7 @@ make build
 - `internal/config` — один пакет на модуль, без подкаталогов по приложениям.
 - `cmd/<appname>` содержит только конфиг, логгер, `app.New`, сигналы и
   запуск/останов; адаптеров там нет.
+- `.gitignore`, `.agentignore` и `Makefile` лежат в корне проекта.
 - `internal/domain` и другие слои отсутствуют, пока в них нет файлов.
 - В `.git/config` записаны имя и email разработчика, глобальный конфиг не
   изменён.

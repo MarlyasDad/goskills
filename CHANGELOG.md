@@ -1,4 +1,7 @@
 ## 2026-11-18
+- makefile: добавлен навык и эталонный Makefile для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
+- gitignore: добавлен навык и эталонный .gitignore для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
+- agentignore: добавлен навык и эталонный .agentignore для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: app.go — composition root приложения, cmd — только bootstrap и сигналы; transport вызывает сценарии через свои интерфейсы (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: валидация вынесена в New адаптера, env-файл перетирает окружение без проверок и приоритетов (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: добавлен чек-лист пакета с конфигурацией — configs/.env.example, локальный Config, общий Config и создание адаптера в DI приложения (Alexander Yudaev <yudaev.alex@gmail.com>)

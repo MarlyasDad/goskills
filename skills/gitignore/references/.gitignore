@@ -1,0 +1,36 @@
+# Build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and coverage
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Local config and secrets
+.env
+.env.*
+configs/.env.*
+!configs/.env.example
+
+# Local infrastructure
+docker-compose.override.yml
+
+# Logs and temp
+*.log
+logs/
+tmp/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

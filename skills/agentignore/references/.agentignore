@@ -1,0 +1,109 @@
+# .agentignore — что ИИ-агент не должен читать и отправлять в модель.
+# Синтаксис как у .gitignore: * ? ** ! и комментарии через #.
+#
+# ВАЖНО: это не граница безопасности. Shell-команды (cat .env, grep -r)
+# обходят этот файл. Секреты не должны лежать в репозитории вообще:
+# дублируй правила в .gitignore и добавь pre-commit с gitleaks.
+
+# --- Секреты и доступы ---
+.env
+.env.*
+!.env.example
+
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+id_rsa*
+id_ed25519*
+id_ecdsa*
+.ssh/
+
+secrets/
+.secrets/
+secret/
+credentials*
+*credentials*
+*secret*.json
+service-account*.json
+
+kubeconfig*
+*.kubeconfig
+.npmrc
+.pypirc
+.netrc
+.htpasswd
+.git-credentials
+
+# --- Инфраструктура ---
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.ovpn
+*.mobileconfig
+docker-compose.override.yml
+
+# --- Данные и выгрузки ---
+dumps/
+dump/
+backups/
+backup/
+*.dump
+*.sql.gz
+*.bak
+*.sqlite
+*.sqlite3
+*.db
+*.parquet
+
+fixtures/real/
+testdata/real/
+samples/real/
+
+*.log
+logs/
+
+# --- Сборка, зависимости, артефакты ---
+node_modules/
+dist/
+build/
+out/
+target/
+bin/
+coverage/
+coverage.out
+.next/
+.nuxt/
+.cache/
+.tmp/
+tmp/
+vendor/
+*.test
+*.prof
+*.min.js
+*.map
+
+# --- IDE и ОС ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- Служебное ---
+.git/
+.gradle/
+.mvn/
+
+# --- Артефакты ИИ-инструментов ---
+.claude/
+.cursor/
+.aider*
+.continue/
+.agentignore
+.aiignore

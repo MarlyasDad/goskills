@@ -50,7 +50,10 @@ OpenCode и попросите агента собрать каркас:
 - `internal/platform/logger/` — примитивы;
 - `configs/.env.example` — шаблон переменных окружения;
 - `Makefile` — команды `build`, `run`, `test`, `test-race`, `lint`;
-- `AGENTS.md`, `.gitignore`, `README.md`.
+- `AGENTS.md`, `.gitignore`, `.agentignore`, `README.md`.
+
+Служебные файлы корня создаются по отдельным навыкам: `makefile`,
+`gitignore`, `agentignore`.
 
 Конфиг один на модуль: `internal/config` — общее зеркало конфиг-файла, без
 деления по приложениям. В k8s значения приходят из env; локально путь можно
