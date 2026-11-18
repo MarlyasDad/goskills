@@ -1,4 +1,5 @@
 ## 2026-11-19
+- logger: переменные SERVICE_* описаны таблицей, SERVICE_ENVIRONMENT больше не наследует APP_ENV; пример .env.example приведён к SERVICE_VERSION и SERVICE_ENVIRONMENT (Alexander Yudaev <yudaev.alex@gmail.com>)
 - logger: добавлен навык про логгер на log/slog — Config, уровни, JSON/text, общие атрибуты и эталонные logger.go/logger_test.go; bootstrap переведён на logger.Config (Alexander Yudaev <yudaev.alex@gmail.com>)
 
 ## 2026-11-18

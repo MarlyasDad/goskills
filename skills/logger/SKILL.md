@@ -60,14 +60,18 @@ type Config struct {
 }
 ```
 
-| Поле | Значения | По умолчанию |
+| Поле | Значения | По умолчанию в `New` |
 |---|---|---|
 | `Level` | `debug`, `info`, `warn`/`warning`, `error` | `info` |
 | `Format` | `json`, `text` | `json` |
 | `Output` | `stdout`, `stderr` | `stdout` |
 | `ServiceName` | имя приложения, например `api` | пусто |
-| `Version` | версия сборки, например `1.4.2` или `dev` | пусто |
+| `Version` | версия продукта или сборки, например `1.4.2` или `dev` | пусто |
 | `Environment` | `local`, `staging`, `production` | пусто |
+
+`New` сам подставляет только уровень, формат и поток. `SERVICE_*` приходят
+из конфига: пустое значение останется пустым атрибутом, поэтому в k8s его
+задают явно. Дефолты приложения — в `internal/config`.
 
 Неверное значение не ломает запуск: уровень становится `info`, формат —
 `json`, поток — `stdout`. Для логгера это осознанное исключение из правила
@@ -117,8 +121,8 @@ func Load() (*Config, error) {
 			Format:      String("LOG_FORMAT", "json"),
 			Output:      String("LOG_OUTPUT", "stdout"),
 			ServiceName: String("SERVICE_NAME", "<appname>"),
-			Version:     String("VERSION", "dev"),
-			Environment: env,
+			Version:     String("SERVICE_VERSION", "dev"),
+			Environment: String("SERVICE_ENVIRONMENT", "local"),
 		},
 	}, nil
 }
@@ -126,16 +130,28 @@ func Load() (*Config, error) {
 
 ```dotenv
 # configs/.env.example
-APP_ENV=local
-# debug | info | warn | error
-LOG_LEVEL=info
-# json | text
-LOG_FORMAT=json
-# stdout | stderr
+SERVICE_NAME=goskills
+SERVICE_VERSION=1.0.0
+SERVICE_ENVIRONMENT=dev
+LOG_LEVEL=debug
+LOG_FORMAT=text
 LOG_OUTPUT=stdout
-SERVICE_NAME=<appname>
-VERSION=dev
 ```
+
+| Переменная | Что означает | Значения |
+|---|---|---|
+| `SERVICE_NAME` | имя сервиса в общих атрибутах | `api`, `worker` |
+| `SERVICE_VERSION` | версия продукта или сборки | `1.0.0`, `dev` |
+| `SERVICE_ENVIRONMENT` | стенд, на котором работает сервис | `dev`, `staging`, `production` |
+| `LOG_LEVEL` | порог логирования | `debug`, `info`, `warn`, `error` |
+| `LOG_FORMAT` | формат вывода | `json`, `text` |
+| `LOG_OUTPUT` | поток вывода | `stdout`, `stderr` |
+
+`SERVICE_*` — метаданные сервиса, `LOG_*` — настройки логгера. Это разные
+группы, и связывать их не нужно: `SERVICE_ENVIRONMENT` — только атрибут
+`env` в логе, `APP_ENV` (если он есть) — поведение приложения. Если оба
+означают один и тот же стенд, задавайте одинаковые значения в
+`configs/.env.example`.
 
 Имена переменных — плоские, без префикса приложения: настройки логов общие
 для всех приложений модуля. Правила источников и `Load()` —
@@ -183,7 +199,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 
 	user, err := s.repo.Create(ctx, req.UserID)
 	if err != nil {
-		s.log.ErrorContext(ctx, "create user", "error", err, "user_id", req.UserID)
+		// Ошибку логирует граница операции — хендлер или main.
 		return fmt.Errorf("create user: %w", err)
 	}
 
@@ -192,8 +208,10 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 }
 ```
 
-- `ctx`-варианты (`InfoContext`, `ErrorContext`) сохраняют `trace_id` и
-  `request_id`, если они лежат в контексте.
+- `ctx`-варианты (`InfoContext`, `DebugContext`, `ErrorContext`) сохраняют
+  `trace_id` и `request_id`, если они лежат в контексте.
+- Ошибка возвращается наверх как есть, с `%w`. Логирует её один раз граница
+  операции, а не каждый слой по пути.
 - `With("component", ...)` — дочерний логгер с постоянным атрибутом. Так
   видно, какой сервис или адаптер пишет сообщение.
 - `With` создаётся один раз в конструкторе, а не на каждый вызов.
@@ -289,7 +307,8 @@ go test ./...
 ```
 
 - Логгер создаётся один раз в `cmd/<appname>/main.go`.
-- `grep -rn "internal/config" internal/platform/logger` даёт пустой вывод.
+- `go list -f '{{join .Imports "\n"}}' ./internal/platform/logger` не
+  содержит пакетов проекта — только стандартную библиотеку.
 - В JSON-логе есть `service`, `version`, `env`.
 - `LOG_LEVEL=info` не печатает `debug`; `LOG_LEVEL=debug` добавляет
   `source`.

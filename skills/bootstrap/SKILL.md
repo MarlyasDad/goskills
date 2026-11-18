@@ -246,8 +246,8 @@ func Load() (*Config, error) {
 			Format:      String("LOG_FORMAT", "json"),
 			Output:      String("LOG_OUTPUT", "stdout"),
 			ServiceName: String("SERVICE_NAME", "<appname>"),
-			Version:     String("VERSION", "dev"),
-			Environment: env,
+			Version:     String("SERVICE_VERSION", "dev"),
+			Environment: String("SERVICE_ENVIRONMENT", "local"),
 		},
 	}, nil
 }
@@ -393,9 +393,10 @@ LOG_LEVEL=info
 LOG_FORMAT=json
 # stdout | stderr
 LOG_OUTPUT=stdout
-# Имя сервиса и версия в общих атрибутах лога
+# Имя сервиса, версия продукта и стенд в общих атрибутах лога
 SERVICE_NAME=<appname>
-VERSION=dev
+SERVICE_VERSION=dev
+SERVICE_ENVIRONMENT=local
 ```
 
 ### README.md
