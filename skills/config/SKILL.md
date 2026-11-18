@@ -270,6 +270,10 @@ func LoadFile(path string) error {
 5. `internal/config/config_test.go` и тест адаптера — дефолты и неверные
    значения.
 
+Если пакет требует бинарь (`goose` для Postgres, `swag` для HTTP, `protoc`
+для gRPC, `mockery` для моков) — обновить `.bin-deps` в `Makefile` в том же
+изменении. Правила — `skills/makefile`.
+
 Пример: появился Postgres.
 
 ```dotenv

@@ -4,14 +4,15 @@ LOCAL_BIN := $(CURDIR)/bin
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build-all test test-race lint fmt tidy tools clean
+.PHONY: help build-all test test-race lint fmt tidy .bin-deps clean
 
 help:
 	@echo "apps: $(APPS)"
 	@echo "  make build-<app>   # bin/<app>"
 	@echo "  make run-<app>     # -config configs/.env.local"
 	@echo "  make build-all"
-	@echo "  make test | test-race | lint | fmt | tidy | tools | clean"
+	@echo "  make test | test-race | lint | fmt | tidy | clean"
+	@echo "  make .bin-deps     # goose, sqlc, mockery"
 
 build-all: $(addprefix build-,$(APPS))
 
@@ -36,13 +37,17 @@ fmt:
 tidy:
 	go mod tidy
 
-# protoc, mockery, swag, goose и другие Go-инструменты — в bin/, не в GOPATH.
+# Go-инструменты — в bin/, не в GOPATH.
 # Версии зафиксировать вместо @latest.
-tools:
-	GOBIN=$(LOCAL_BIN) go install \
-		github.com/vektra/mockery/v2@latest \
-		github.com/swaggo/swag/cmd/swag@latest \
-		github.com/pressly/goose/v3/cmd/goose@latest
+.bin-deps:
+	$(info Installing binary dependencies...)
+
+	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
+	# gRPC: protoc-gen-go, protoc-gen-go-grpc
+	# HTTP: github.com/swaggo/swag/cmd/swag
+	# minimock вместо mockery: github.com/gojuno/minimock/v3/cmd/minimock
 
 clean:
 	rm -rf $(LOCAL_BIN)

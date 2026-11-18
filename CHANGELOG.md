@@ -1,4 +1,6 @@
 ## 2026-11-18
+- makefile: добавлена цель .bin-deps; бинарь добавляется вместе с пакетом, который его требует (Alexander Yudaev <yudaev.alex@gmail.com>)
+- bootstrap: тестовый стек выбирается на старте; mockery и testify добавляются в каркас, моки не пишутся руками (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: цели с именем приложения build-<app>/run-<app>, APPS, LOCAL_BIN; версия Go только в go.mod, локальный конфиг configs/.env.local (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: локальный env-файл зафиксирован как configs/.env.local (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: добавлен навык и эталонный Makefile для корня проекта (Alexander Yudaev <yudaev.alex@gmail.com>)

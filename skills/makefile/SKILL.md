@@ -35,7 +35,7 @@ metadata:
 | `test-race` | `go test -race -shuffle=on -count=1 ./...` |
 | `lint` | `go vet ./...`; если есть `golangci-lint` — он |
 
-Дополнительно: `fmt`, `tidy`, `tools`, `clean`.
+Дополнительно: `fmt`, `tidy`, `.bin-deps`, `clean`.
 
 ## Переменные
 
@@ -51,6 +51,43 @@ LOCAL_BIN := $(CURDIR)/bin
   `bin/` уже в `.gitignore`.
 - Отдельных `APP`, `GO`, `BIN`, `ARGS` нет: приложение задаётся в имени цели,
   компилятор — `go` из `PATH`, локальный конфиг вшит в `run-<app>`.
+
+## Бинарные зависимости
+
+Go-инструменты ставятся в `bin/`, а не в глобальный `GOPATH`:
+
+```make
+.PHONY: .bin-deps
+.bin-deps:
+	$(info Installing binary dependencies...)
+
+	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
+```
+
+Цель точечная (с точкой), в обычный `make` не входит. Запускается явно:
+`make .bin-deps`.
+
+Правило: **добавил пакет или инструмент — обнови `.bin-deps` в том же
+изменении**. Не оставляй установку «на потом».
+
+| Что появилось в проекте | Что добавить |
+|---|---|
+| Postgres | `goose`; `sqlc`, если генерация запросов |
+| HTTP-сервер | `swag` для OpenAPI |
+| gRPC | `protoc` (системный) + `protoc-gen-go`, `protoc-gen-go-grpc` |
+| Моки | `mockery` или `minimock` — выбрать один |
+| Миграции | `goose` |
+
+- `testify` — библиотека, а не бинарь: идёт в `go.mod`, не в `.bin-deps`.
+- Если импортируемый модуль требует бинарник для генерации, Makefile
+  меняется вместе с подключением модуля.
+- Часть инструментов нужна **сразу при bootstrap**: например, `mockery`,
+  если пользователь не хочет писать моки руками, и `testify` как библиотека
+  проверок. Их не откладывают до первого теста.
+- Версии инструментов фиксируются вместо `@latest`: воспроизводимая сборка
+  важнее «свежести».
 
 ## Версия Go
 
