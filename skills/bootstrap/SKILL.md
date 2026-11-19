@@ -173,6 +173,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -208,6 +209,37 @@ func Int(key string, fallback int) (int, error) {
 		return 0, err
 	}
 	return n, nil
+}
+
+// Bool разбирает bool из env; при ошибке возвращает её.
+func Bool(key string, fallback bool) (bool, error) {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback, nil
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return false, err
+	}
+	return b, nil
+}
+
+// CSV разбирает список через запятую: "a, b,,c" -> ["a", "b", "c"].
+// Пустые элементы и пробелы вокруг значений отбрасываются.
+func CSV(key string) []string {
+	v := os.Getenv(key)
+	if v == "" {
+		return nil
+	}
+
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 ```
 
@@ -264,6 +296,10 @@ func Load() (*Config, error) {
 `SERVICE_ENVIRONMENT` намеренно без дефолта `local`: иначе стенд без
 переменной выглядит как локальная машина.
 
+Для HTTP-каркаса добавь в `Config` поле `HTTP http.Config` и разбор `HTTP_*`:
+готовый файл — `skills/http-server/references/app_config.go`. Он заменяет
+`internal/config/config.go` после появления HTTP-пакета.
+
 ### internal/config/config_test.go
 
 По умолчанию — `testify/require`. Если пользователь явно отказался от
@@ -293,6 +329,23 @@ func TestLoad_RejectsInvalidShutdownTimeout(t *testing.T) {
 
 	_, err := Load()
 	require.Error(t, err)
+}
+
+func TestBool(t *testing.T) {
+	t.Setenv("FLAG", "true")
+
+	got, err := Bool("FLAG", false)
+	require.NoError(t, err)
+	require.True(t, got)
+}
+
+func TestCSV(t *testing.T) {
+	t.Setenv("ORIGINS", "https://a.example, https://b.example,, ")
+
+	require.Equal(t, []string{
+		"https://a.example",
+		"https://b.example",
+	}, CSV("ORIGINS"))
 }
 ```
 
@@ -382,6 +435,9 @@ func (a *App) stop(ctx context.Context) error {
    сигналов и `WaitGroup` в `main` не нужны.
 4. Ошибки возвращаются с контекстом (`load config: %w`), логируются один раз
    в `main`.
+5. Минимальные аннотации swag — над `main`; после первого `make swag`
+   добавить blank-import сгенерированного пакета `docs`. Порядок и команда —
+   `skills/http-server`, раздел «Swagger».
 
 Логи: сообщение стабильное и строчное, данные — в атрибутах. Ошибку
 логирует один раз `main`: `slog.Error("service failed", "error", err)`.
@@ -438,6 +494,20 @@ LOG_OUTPUT=stdout
 SERVICE_NAME=<appname>
 SERVICE_VERSION=dev
 SERVICE_ENVIRONMENT=local
+
+# HTTP-сервер (для HTTP-каркаса; подключение — skills/http-server)
+HTTP_HOST=
+HTTP_PORT=8080
+# 0 — значение по умолчанию, его подставит http.NewServer
+HTTP_READ_HEADER_TIMEOUT=0s
+HTTP_READ_TIMEOUT=0s
+HTTP_WRITE_TIMEOUT=0s
+HTTP_IDLE_TIMEOUT=0s
+HTTP_MAX_HEADER_BYTES=1048576
+# CSV через запятую; пусто — CORS выключен
+HTTP_CORS_ALLOWED_ORIGINS=
+HTTP_METRICS=false
+HTTP_SWAGGER=false
 ```
 
 ### README.md

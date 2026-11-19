@@ -2,6 +2,7 @@ package documents
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"<module>/internal/domain"
 	"<module>/internal/shared"
+	"<module>/internal/transport/<appname>/http/responses"
 
 	"github.com/stretchr/testify/require"
 )
@@ -44,20 +46,38 @@ func TestCreate(t *testing.T) {
 			name:       "invalid json",
 			body:       `{`,
 			wantStatus: http.StatusBadRequest,
-			wantBody:   `{"error":"invalid request","code":"invalid_request"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"invalid request","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 		{
 			name:       "body too large",
 			body:       `{"title":"` + strings.Repeat("a", maxBodyBytes) + `"}`,
 			wantStatus: http.StatusRequestEntityTooLarge,
-			wantBody:   `{"error":"request body too large","code":"payload_too_large"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"request body too large","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
+		},
+		{
+			name:       "missing title",
+			body:       `{"kind":"inspection"}`,
+			wantStatus: http.StatusBadRequest,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"title: value is required","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 		{
 			name:       "conflict",
 			body:       `{"title":"Акт","kind":"inspection"}`,
 			err:        domain.ErrConflict,
 			wantStatus: http.StatusConflict,
-			wantBody:   `{"error":"conflict","code":"conflict"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"conflict","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 	}
 

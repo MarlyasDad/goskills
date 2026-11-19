@@ -69,6 +69,9 @@ Config**» и «**где валидировать**». Вопрос «где л�
 | `internal/app/<appname>/app.go` | DI: адаптеры и сервисы из `Config` | дублирования полей |
 | `cmd/<appname>/` | флаг `-config`, `Load()`, логгер, `app.New`, сигналы | создания адаптеров |
 
+Импорт `internal/config → internal/transport/<appname>/http` разрешён только
+ради `http.Config`; остальные пакеты транспорта `config` не импортирует.
+
 Подробная раскладка каталогов — в `skills/project-structure`; границы
 импортов — в `skills/architecture`.
 
@@ -120,6 +123,27 @@ func Load() (*Config, error) {
 	}, nil
 }
 ```
+
+### HTTP-сервер
+
+`internal/config` вкладывает `http.Config` из
+`internal/transport/<appname>/http` и разбирает `HTTP_*`:
+
+- `HTTP_HOST` — по умолчанию `""` (все интерфейсы);
+- `HTTP_PORT` — по умолчанию `8080`; `0` допустим для тестов (эфемерный
+  порт);
+- `HTTP_READ_HEADER_TIMEOUT`, `HTTP_READ_TIMEOUT`, `HTTP_WRITE_TIMEOUT`,
+  `HTTP_IDLE_TIMEOUT` — по умолчанию `0`, реальные значения подставит
+  `http.NewServer`;
+- `HTTP_MAX_HEADER_BYTES` — по умолчанию `1 MiB`;
+- `HTTP_CORS_ALLOWED_ORIGINS` — CSV через запятую, пустое значение выключает
+  CORS;
+- `HTTP_METRICS`, `HTTP_SWAGGER` — `bool`, по умолчанию `false`.
+
+Полный `Load` с этими полями — `skills/http-server`, раздел «Config»;
+готовый файл — `skills/http-server/references/app_config.go`.
+Для bool используй `Bool`, для CSV — `CSV` из `internal/config/env.go`, а не
+`strconv.ParseBool`/`strings.Split` по месту.
 
 ## Локальный Config адаптера
 

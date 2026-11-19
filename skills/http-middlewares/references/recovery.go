@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 // Recovery ловит панику, логирует стек и отдаёт 500.
@@ -36,7 +38,14 @@ func Recovery(log *slog.Logger) Middleware {
 					panic(http.ErrAbortHandler)
 				}
 
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				if err := responses.RespondWithError(
+					w,
+					http.StatusInternalServerError,
+					responses.CodeUnassigned,
+					http.StatusText(http.StatusInternalServerError),
+				); err != nil {
+					log.ErrorContext(r.Context(), "write recovery response", "error", err)
+				}
 			}()
 
 			next.ServeHTTP(w, r)

@@ -79,7 +79,8 @@ func TestConfig_Validate(t *testing.T) {
 		wantErr string
 	}{
 		{name: "valid without timeouts"},
-		{name: "zero port", mutate: func(c *Config) { c.Port = 0 }, wantErr: "port"},
+		{name: "zero port for tests", mutate: func(c *Config) { c.Port = 0 }},
+		{name: "negative port", mutate: func(c *Config) { c.Port = -1 }, wantErr: "port"},
 		{name: "negative read header timeout", mutate: func(c *Config) { c.ReadHeaderTimeout = -time.Second }, wantErr: "read header timeout"},
 		{name: "negative read timeout", mutate: func(c *Config) { c.ReadTimeout = -time.Second }, wantErr: "read timeout"},
 		{name: "negative write timeout", mutate: func(c *Config) { c.WriteTimeout = -time.Second }, wantErr: "write timeout"},

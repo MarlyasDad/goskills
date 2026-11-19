@@ -25,13 +25,16 @@ Middleware — `skills/http-middlewares`.
 ## Каталог
 
 ```schema
-internal/transport/<appname>/http/<group>/<resource>/
-├── handler.go       # Handler, New и HTTP-методы
-├── ports.go         # интерфейсы операций, которые нужны контроллеру
-├── request.go       # Request DTO и toInput
-├── response.go      # Response DTO и fromOutput
-├── errors.go        # маппинг ошибок, если он не помещается в handler.go
-└── handler_test.go
+internal/transport/<appname>/http/
+├── middleware/      # рядом с контроллерами
+├── responses/       # JSON, ошибки, валидация, файлы
+└── <group>/<resource>/
+    ├── handler.go       # Handler, New и HTTP-методы
+    ├── ports.go         # интерфейсы операций, которые нужны контроллеру
+    ├── request.go       # Request DTO, validate и toInput
+    ├── response.go      # Response DTO и fromOutput
+    ├── errors.go        # маппинг ошибок, если он не помещается в handler.go
+    └── handler_test.go
 ```
 
 - `<group>` — `internal`, `external` или смысловая группа. `<resource>` —
@@ -41,15 +44,19 @@ internal/transport/<appname>/http/<group>/<resource>/
   `internaluser`, `externaluser`.
 - Один каталог — один ресурс или небольшая группа родственных операций.
   Не складывать все ручки приложения в один `handler.go`.
-- Общие помощники ответа (`JSON`, `Error`) — `http/respond/`. Если
-  контроллер один, можно оставить их в `handler.go`; при втором
-  контроллере выноси в `respond`, чтобы формат ошибок не разъехался.
+- Общие конструкторы ответов — `http/responses/`, рядом с
+  `http/middleware/`: `RespondWithJSON`, `RespondWithText`,
+  `RespondWithError`, `RespondWithValidationErrors`, `RespondWithFile`.
+  Формат ошибок должен быть один на весь API.
+- Если контроллер один, можно оставить помощники в `handler.go`; при втором
+  контроллере выноси их в `responses`, чтобы формат не разъехался.
 
 Готовые файлы — `references/ports.go`, `references/request.go`,
-`references/response.go`, `references/handler.go`, `references/respond.go` и
-`references/handler_test.go`. Скопировать в
-`internal/transport/<appname>/http/documents/` (кроме `respond.go` — он
-идёт в `http/respond/`) и заменить `<module>`/`<appname>`. Фрагменты ниже
+`references/response.go`, `references/handler.go`, `references/responses.go`,
+`references/file.go` и тесты `references/handler_test.go`,
+`references/file_test.go`. Скопировать контроллер в
+`internal/transport/<appname>/http/documents/`, а `responses.go` и `file.go`
+— в `http/responses/`; заменить `<module>`/`<appname>`. Фрагменты ниже
 объясняют правила; канонический код — в `references/`.
 
 ## ports.go
@@ -93,9 +100,8 @@ type Creator interface {
 package documents
 
 import (
-	"fmt"
-
 	"<module>/internal/shared"
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 type CreateRequest struct {
@@ -103,17 +109,31 @@ type CreateRequest struct {
 	Kind  string `json:"kind" example:"inspection"`
 }
 
-func (r CreateRequest) toInput() (shared.CreateDocumentInput, error) {
+// validate проверяет формат полей. Бизнес-валидация — в сервисе или домене.
+func (r CreateRequest) validate() responses.ValidationErrors {
+	var errs responses.ValidationErrors
+
 	if r.Title == "" {
-		return shared.CreateDocumentInput{}, fmt.Errorf("title is required")
+		errs = append(errs, responses.ValidationError{
+			Message: "title: value is required",
+			Code:    responses.CodeUnassigned,
+		})
 	}
 	if r.Kind == "" {
-		return shared.CreateDocumentInput{}, fmt.Errorf("kind is required")
+		errs = append(errs, responses.ValidationError{
+			Message: "kind: value is required",
+			Code:    responses.CodeUnassigned,
+		})
 	}
+
+	return errs
+}
+
+func (r CreateRequest) toInput() shared.CreateDocumentInput {
 	return shared.CreateDocumentInput{
 		Title: r.Title,
 		Kind:  r.Kind,
-	}, nil
+	}
 }
 ```
 
@@ -135,7 +155,10 @@ func (r CreateRequest) toInput() (shared.CreateDocumentInput, error) {
   разные случаи, если это важно контракту.
 - `json:"-"` — для полей, которые заполняет сервер (ID пользователя из
   контекста, вычисленные права).
-- Не добавлять в DTO методы с бизнес-логикой; только маппинг.
+- В 400 имя поля уже внутри `Message` (`"title: value is required"`).
+  `ValidationError.Field` имеет `omitempty` и не заполняется; иначе ответ
+  разойдётся с контрактом `{errors:[{message, code}]}`.
+- Не добавлять в DTO бизнес-логику; только маппинг и форматную валидацию.
 
 ## response.go
 
@@ -188,7 +211,7 @@ import (
 	"net/http"
 
 	"<module>/internal/domain"
-	"<module>/internal/transport/<appname>/http/respond"
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 const maxBodyBytes = 1 << 20 // 1 MiB
@@ -215,19 +238,20 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input, err := req.toInput()
-	if err != nil {
-		h.writeError(w, r, fmt.Errorf("%w: %v", domain.ErrInvalidInput, err))
+	if errs := req.validate(); len(errs) > 0 {
+		if err := responses.RespondWithValidationErrors(w, errs); err != nil {
+			h.log.ErrorContext(r.Context(), "write validation response", "error", err)
+		}
 		return
 	}
 
-	out, err := h.creator.Create(r.Context(), input)
+	out, err := h.creator.Create(r.Context(), req.toInput())
 	if err != nil {
 		h.writeError(w, r, err)
 		return
 	}
 
-	if err := respond.JSON(w, http.StatusCreated, fromCreateOutput(out)); err != nil {
+	if err := responses.RespondWithJSON(w, http.StatusCreated, fromCreateOutput(out)); err != nil {
 		h.log.ErrorContext(r.Context(), "write response", "error", err)
 	}
 }
@@ -253,23 +277,27 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) {
-	status, code := http.StatusInternalServerError, "internal_error"
+	status := http.StatusInternalServerError
 
 	switch {
 	case errors.Is(err, errBodyTooLarge):
-		status, code = http.StatusRequestEntityTooLarge, "payload_too_large"
+		status = http.StatusRequestEntityTooLarge
 	case errors.Is(err, domain.ErrInvalidInput):
-		status, code = http.StatusBadRequest, "invalid_request"
+		status = http.StatusBadRequest
 	case errors.Is(err, domain.ErrNotFound):
-		status, code = http.StatusNotFound, "not_found"
+		status = http.StatusNotFound
 	case errors.Is(err, domain.ErrConflict):
-		status, code = http.StatusConflict, "conflict"
+		status = http.StatusConflict
 	case errors.Is(err, context.Canceled):
 		h.log.WarnContext(r.Context(), "request canceled", "error", err)
 		return
 	case errors.Is(err, context.DeadlineExceeded):
-		status, code = http.StatusGatewayTimeout, "timeout"
+		status = http.StatusGatewayTimeout
 	}
+
+	// TODO: код из корпоративного справочника. До присвоения — заглушка,
+	// чтобы не выдумывать значения.
+	code := responses.CodeUnassigned
 
 	level := slog.LevelWarn
 	if status >= http.StatusInternalServerError {
@@ -280,11 +308,11 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) 
 		slog.String("method", r.Method),
 		slog.String("path", r.URL.Path),
 		slog.Int("status", status),
-		slog.String("code", code),
+		slog.Int("code", code),
 	)
 
-	if writeErr := respond.Error(w, status, code, publicMessage(status)); writeErr != nil {
-		h.log.ErrorContext(r.Context(), "write error response", "error", writeErr)
+	if err := responses.RespondWithError(w, status, code, publicMessage(status)); err != nil {
+		h.log.ErrorContext(r.Context(), "write error response", "error", err)
 	}
 }
 
@@ -326,21 +354,26 @@ func publicMessage(status int) string {
 
 ### Ошибки и коды
 
-| Ситуация | Код | Код в теле |
-|---|---|---|
-| Успех | 200/201/204 | — |
-| Неверный JSON, путь, query, формат | 400 | `invalid_request` |
-| Тело больше лимита | 413 | `payload_too_large` |
-| Нет аутентификации | 401 | `unauthorized` |
-| Нет прав | 403 | `forbidden` |
-| Не найдено | 404 | `not_found` |
-| Конфликт состояния | 409 | `conflict` |
-| Семантическая валидация | 422 | `unprocessable_entity` |
-| Слишком много запросов | 429 | `too_many_requests` |
-| Внутренняя ошибка | 500 | `internal_error` |
-| Зависимость недоступна | 503 | `unavailable` |
-| Таймаут зависимости | 504 | `timeout` |
+| Ситуация | HTTP |
+|---|---|
+| Успех | 200/201/204 |
+| Неверный JSON, путь, query, формат | 400 |
+| Тело больше лимита | 413 |
+| Нет аутентификации | 401 |
+| Нет прав | 403 |
+| Не найдено | 404 |
+| Конфликт состояния | 409 |
+| Семантическая валидация | 422 |
+| Слишком много запросов | 429 |
+| Внутренняя ошибка | 500 |
+| Зависимость недоступна | 503 |
+| Таймаут зависимости | 504 |
 
+- HTTP-статус выбирает транспорт.
+- `Error.Code` — код из **корпоративного справочника ошибок**, не HTTP-статус.
+  Значения не выдумываются: пока эксплуатация не присвоила код, используй
+  `responses.CodeUnassigned` (`0`). Лог-коллектор сортирует по коду, поэтому
+  присвоенные значения должны быть стабильными.
 - Домен и сервис возвращают sentinel/типизированные ошибки, а не HTTP-коды.
 - Маппинг — в одном месте (`errors.go` или `writeError`). Не сравнивай
   ошибки по тексту.
@@ -353,24 +386,36 @@ func publicMessage(status int) string {
 ### Ответ
 
 ```go
-// internal/transport/<appname>/http/respond/respond.go
-package respond
+// internal/transport/<appname>/http/responses/responses.go
+package responses
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
-type ErrorBody struct {
-	Error string `json:"error"`
-	Code  string `json:"code,omitempty"`
+// CodeUnassigned — код ещё не присвоен эксплуатацией. Это не код из
+// корпоративного справочника, а заглушка: значения кодов не выдумываются.
+const CodeUnassigned = 0
+
+type Error struct {
+	Message string `json:"message"`
+	// Code — код из корпоративного справочника; 0 — ещё не присвоен.
+	Code int `json:"code"`
 }
 
-func JSON(w http.ResponseWriter, status int, v any) error {
-	body, err := json.Marshal(v)
+type ErrorResponse struct {
+	Errors []Error `json:"errors"`
+}
+
+func RespondWithJSON(w http.ResponseWriter, status int, data any) error {
+	body, err := json.Marshal(data)
 	if err != nil {
-		writeInternalError(w)
-		return err
+		if writeErr := RespondWithText(w, http.StatusInternalServerError, "internal server error"); writeErr != nil {
+			return fmt.Errorf("marshal response: %w; write fallback: %v", err, writeErr)
+		}
+		return fmt.Errorf("marshal response: %w", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -383,26 +428,100 @@ func JSON(w http.ResponseWriter, status int, v any) error {
 	return err
 }
 
-func Error(w http.ResponseWriter, status int, code, message string) error {
-	return JSON(w, status, ErrorBody{Error: message, Code: code})
+func RespondWithText(w http.ResponseWriter, status int, message string) error {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(status)
+	_, err := w.Write([]byte(message))
+	return err
 }
 
-func writeInternalError(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusInternalServerError)
-	_ = json.NewEncoder(w).Encode(ErrorBody{
-		Error: "internal server error",
-		Code:  "internal_error",
+func RespondWithError(w http.ResponseWriter, status, code int, message string) error {
+	return RespondWithJSON(w, status, ErrorResponse{
+		Errors: []Error{{Message: message, Code: code}},
 	})
+}
+```
+
+Полные типы `ValidationError`, `ValidationErrors` и
+`RespondWithValidationErrors` — в `references/responses.go`. Конструктор
+валидации всегда отвечает 400 и отдаёт список полей:
+
+```go
+type ValidationError struct {
+	// Field не входит в контракт 400: имя поля уже внутри Message.
+	Field   string `json:"field,omitempty"`
+	Message string `json:"message"`
+	// Code — код из корпоративного справочника; 0 — ещё не присвоен.
+	Code int `json:"code"`
+}
+
+type ValidationErrorResponse struct {
+	Errors []ValidationError `json:"errors"`
+}
+
+func RespondWithValidationErrors(w http.ResponseWriter, errs []ValidationError) error {
+	return RespondWithJSON(w, http.StatusBadRequest, ValidationErrorResponse{Errors: errs})
 }
 ```
 
 - `json.Marshal` до `WriteHeader`: если сериализация упала, ещё можно
   отдать 500.
 - `204 No Content` — без тела.
+- Конструкторы возвращают ошибку записи; вызывающий логирует её. Не
+  превращай `_, _ = w.Write(...)` в молчаливое проглатывание.
 - `Content-Type` — `application/json; charset=utf-8`.
-- Форма ошибки одна на весь API. Если контракт уже другой — следуй
-  контракту, но не смешивай `http.Error` и JSON в одном API.
+- Форма ошибки одна на весь API:
+  `{"errors":[{"message":"...","code":0}]}`. Валидация:
+  `{"errors":[{"message":"title: ...","code":0}]}`.
+- `0` здесь — `responses.CodeUnassigned`, пока эксплуатация не присвоила
+  код из корпоративного справочника.
+- Если контракт уже другой — следуй контракту, но не смешивай `http.Error`
+  и JSON в одном API.
+- Коды приложения (`Code`) — не HTTP-статусы. HTTP-статус выбирает
+  обработчик, а код ошибки — из корпоративного справочника и стабилен для
+  лог-коллектора.
+
+### Файл
+
+Для `.docx` и других бинарных ответов — `RespondWithFile`, а не JSON и не
+ручная сборка заголовков в handler.
+
+```go
+docx, err := h.service.Generate(r.Context(), req.toInput())
+if err != nil {
+	h.writeError(w, r, err)
+	return
+}
+
+if err := responses.RespondWithFile(
+	w,
+	http.StatusOK,
+	"act.docx",
+	responses.ContentTypeDOCX,
+	bytes.NewReader(docx),
+); err != nil {
+	h.log.ErrorContext(r.Context(), "write file response", "error", err)
+}
+```
+
+Правила:
+
+- `Content-Type` для docx — `responses.ContentTypeDOCX`
+  (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`).
+  Если тип неизвестен — `application/octet-stream`.
+- `Content-Disposition: attachment; filename=...` ставит конструктор; имя
+  очищается от путей и управляющих символов. Не собирай заголовок вручную
+  из пользовательской строки.
+- `RespondWithFile` пишет потоком через `io.Copy`: не буферизуй большой файл
+  в памяти и не превращай `[]byte` в строку.
+- `Content-Length` ставится, если размер можно узнать (`bytes.Buffer`,
+  `bytes.Reader`, `io.Seeker`). Иначе ответ идёт chunked — это нормально.
+- Ошибка после `WriteHeader` означает, что заголовки и часть тела уже ушли:
+  статус не изменить. Верни/залогируй ошибку, не пытайся писать второй ответ.
+- Для `Range`, `If-Modified-Since` или файла на диске/S3 используй
+  `http.ServeContent` с `io.ReadSeeker`, а не `RespondWithFile`.
+- `io.ReadCloser` (например, файл из S3) закрывай в handler после
+  `RespondWithFile`.
 
 ## Логирование
 
@@ -410,6 +529,8 @@ func writeInternalError(w http.ResponseWriter) {
   обработчике.
 - В обработчике логируй только то, что middleware не знает: доменную
   ошибку, ID операции, код ошибки.
+- В лог ошибки добавляй `code` — по нему сортирует лог-коллектор.
+  HTTP-статуса для этого недостаточно; до присвоения кода — `CodeUnassigned`.
 - Обязательно `logger.ErrorContext`/`WarnContext` с `r.Context()`, чтобы
   сохранить request ID и трейс.
 - Не логируй тело запроса, `Authorization`, токены, cookie и персональные
@@ -434,6 +555,7 @@ package documents
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -443,6 +565,7 @@ import (
 
 	"<module>/internal/domain"
 	"<module>/internal/shared"
+	"<module>/internal/transport/<appname>/http/responses"
 
 	"github.com/stretchr/testify/require"
 )
@@ -476,20 +599,38 @@ func TestCreate(t *testing.T) {
 			name:       "invalid json",
 			body:       `{`,
 			wantStatus: http.StatusBadRequest,
-			wantBody:   `{"error":"invalid request","code":"invalid_request"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"invalid request","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 		{
 			name:       "body too large",
 			body:       `{"title":"` + strings.Repeat("a", maxBodyBytes) + `"}`,
 			wantStatus: http.StatusRequestEntityTooLarge,
-			wantBody:   `{"error":"request body too large","code":"payload_too_large"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"request body too large","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
+		},
+		{
+			name:       "missing title",
+			body:       `{"kind":"inspection"}`,
+			wantStatus: http.StatusBadRequest,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"title: value is required","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 		{
 			name:       "conflict",
 			body:       `{"title":"Акт","kind":"inspection"}`,
 			err:        domain.ErrConflict,
 			wantStatus: http.StatusConflict,
-			wantBody:   `{"error":"conflict","code":"conflict"}`,
+			wantBody: fmt.Sprintf(
+				`{"errors":[{"message":"conflict","code":%d}]}`,
+				responses.CodeUnassigned,
+			),
 		},
 	}
 
@@ -523,8 +664,8 @@ func TestCreate(t *testing.T) {
 - Фейк или mockery-мок интерфейса операции; без БД и сети.
 - Проверяй статус, `Content-Type`, тело через `require.JSONEq`,
   заголовки, которые важны контракту.
-- Кейсы: успех, битый JSON, отсутствующий path/query, ошибка сервиса,
-  таймаут/отмена контекста.
+- Кейсы: успех, битый JSON, ошибка валидации, отсутствующий path/query,
+  ошибка сервиса, таймаут/отмена контекста.
 - Отдельный тест router — в `skills/http-server`; middleware — в
   `skills/http-middlewares`.
 
@@ -558,11 +699,15 @@ func TestCreate(t *testing.T) {
 ## Эталон
 
 - `references/ports.go` — интерфейс операции.
-- `references/request.go` — `Request` и `toInput`.
+- `references/request.go` — `Request`, `validate` и `toInput`.
 - `references/response.go` — `Response` и `fromOutput`.
 - `references/handler.go` — тонкий обработчик, лимит тела, маппинг ошибок.
-- `references/respond.go` — общий JSON-ответ и формат ошибки.
+- `references/responses.go` — JSON, текст, ошибки и валидационные ответы.
+- `references/file.go` — `RespondWithFile`, docx MIME, Content-Disposition,
+  потоковая запись.
 - `references/handler_test.go` — табличный тест на `httptest`.
+- `references/file_test.go` — тесты файлового ответа, размера и ошибки
+  записи.
 
 ## Границы
 

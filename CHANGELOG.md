@@ -1,4 +1,8 @@
 ## 2026-11-19
+- http-controllers: `ValidationError.Field` стал `omitempty` и не заполняется в 400 — ответ соответствует контракту `{errors:[{message, code}]}`, имя поля внутри `message` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-server/bootstrap/config/makefile/project-structure: системный каркас без бизнес-контроллеров — `Load` для `http.Config`, `Bool`/`CSV`, пустой `HandlerSet`, `Port: 0`, `Ready: nil`, `swag`/`make swag`, metrics/docs за флагами (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-controllers/http-server/http-middlewares/project-structure: ответы вынесены в `http/responses/` — `RespondWithJSON`, `RespondWithText`, `RespondWithError`, `RespondWithValidationErrors`, `RespondWithFile`; конструкторы возвращают ошибку записи, вызывающий логирует; коды — из корпоративного справочника, до присвоения — `CodeUnassigned`; файл отдаётся потоком с docx MIME и `Content-Disposition` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- architecture/config: разрешён импорт `config → transport/<appname>/http` только ради `http.Config`; матрица больше не противоречит `http-server` и `config` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server: таймауты сделаны необязательными — `0` заменяется дефолтом в `NewServer`, отрицательные значения отклоняются `Validate`; дефолты не дублируются в `config.Load` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server: добавлен навык — Config, server.go, корневой router, health/metrics/docs, таймауты и `net.JoinHostPort`; сервер привязан к `<appname>` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-controllers: добавлен навык — handler.go/ports.go/request.go/response.go, тонкий обработчик, DTO, коды и маппинг ошибок, тесты на httptest (Alexander Yudaev <yudaev.alex@gmail.com>)

@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 // Principal — аутентифицированный субъект.
@@ -20,13 +23,20 @@ type Authenticator interface {
 type principalKey struct{}
 
 // Auth кладёт Principal в контекст или отвечает 401.
-func Auth(a Authenticator) Middleware {
+func Auth(log *slog.Logger, a Authenticator) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			principal, err := a.Authenticate(r.Context(), r)
 			if err != nil {
 				w.Header().Set("WWW-Authenticate", `Bearer realm="api"`)
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusUnauthorized,
+					responses.CodeUnassigned,
+					"unauthorized",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write auth response", "error", writeErr)
+				}
 				return
 			}
 

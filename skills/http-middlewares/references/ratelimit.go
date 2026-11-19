@@ -2,9 +2,12 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 // Limiter — порт ограничителя. Реализация (in-memory, Redis) живёт в infra.
@@ -13,17 +16,31 @@ type Limiter interface {
 }
 
 // RateLimit проверяет лимит по ключу из запроса.
-func RateLimit(limiter Limiter, key func(*http.Request) string) Middleware {
+func RateLimit(log *slog.Logger, limiter Limiter, key func(*http.Request) string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			allowed, err := limiter.Allow(r.Context(), key(r))
 			if err != nil {
-				http.Error(w, "rate limiter unavailable", http.StatusServiceUnavailable)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusServiceUnavailable,
+					responses.CodeUnassigned,
+					"rate limiter unavailable",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write rate limit response", "error", writeErr)
+				}
 				return
 			}
 			if !allowed {
 				w.Header().Set("Retry-After", "60")
-				http.Error(w, "too many requests", http.StatusTooManyRequests)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusTooManyRequests,
+					responses.CodeUnassigned,
+					"too many requests",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write rate limit response", "error", writeErr)
+				}
 				return
 			}
 

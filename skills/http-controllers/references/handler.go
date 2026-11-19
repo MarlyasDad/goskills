@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"<module>/internal/domain"
-	"<module>/internal/transport/<appname>/http/respond"
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 const maxBodyBytes = 1 << 20 // 1 MiB
@@ -38,19 +38,20 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input, err := req.toInput()
-	if err != nil {
-		h.writeError(w, r, fmt.Errorf("%w: %v", domain.ErrInvalidInput, err))
+	if errs := req.validate(); len(errs) > 0 {
+		if err := responses.RespondWithValidationErrors(w, errs); err != nil {
+			h.log.ErrorContext(r.Context(), "write validation response", "error", err)
+		}
 		return
 	}
 
-	out, err := h.creator.Create(r.Context(), input)
+	out, err := h.creator.Create(r.Context(), req.toInput())
 	if err != nil {
 		h.writeError(w, r, err)
 		return
 	}
 
-	if err := respond.JSON(w, http.StatusCreated, fromCreateOutput(out)); err != nil {
+	if err := responses.RespondWithJSON(w, http.StatusCreated, fromCreateOutput(out)); err != nil {
 		h.log.ErrorContext(r.Context(), "write response", "error", err)
 	}
 }
@@ -76,23 +77,27 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) {
-	status, code := http.StatusInternalServerError, "internal_error"
+	status := http.StatusInternalServerError
 
 	switch {
 	case errors.Is(err, errBodyTooLarge):
-		status, code = http.StatusRequestEntityTooLarge, "payload_too_large"
+		status = http.StatusRequestEntityTooLarge
 	case errors.Is(err, domain.ErrInvalidInput):
-		status, code = http.StatusBadRequest, "invalid_request"
+		status = http.StatusBadRequest
 	case errors.Is(err, domain.ErrNotFound):
-		status, code = http.StatusNotFound, "not_found"
+		status = http.StatusNotFound
 	case errors.Is(err, domain.ErrConflict):
-		status, code = http.StatusConflict, "conflict"
+		status = http.StatusConflict
 	case errors.Is(err, context.Canceled):
 		h.log.WarnContext(r.Context(), "request canceled", "error", err)
 		return
 	case errors.Is(err, context.DeadlineExceeded):
-		status, code = http.StatusGatewayTimeout, "timeout"
+		status = http.StatusGatewayTimeout
 	}
+
+	// TODO: код из корпоративного справочника. До присвоения — заглушка,
+	// чтобы не выдумывать значения.
+	code := responses.CodeUnassigned
 
 	level := slog.LevelWarn
 	if status >= http.StatusInternalServerError {
@@ -103,11 +108,11 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) 
 		slog.String("method", r.Method),
 		slog.String("path", r.URL.Path),
 		slog.Int("status", status),
-		slog.String("code", code),
+		slog.Int("code", code),
 	)
 
-	if writeErr := respond.Error(w, status, code, publicMessage(status)); writeErr != nil {
-		h.log.ErrorContext(r.Context(), "write error response", "error", writeErr)
+	if err := responses.RespondWithError(w, status, code, publicMessage(status)); err != nil {
+		h.log.ErrorContext(r.Context(), "write error response", "error", err)
 	}
 }
 

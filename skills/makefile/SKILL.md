@@ -47,6 +47,10 @@ LOCAL_BIN := $(CURDIR)/bin
 MOCKERY_VERSION := v3.9.1
 GOOSE_VERSION := v3.30.1
 SQLC_VERSION := v1.31.1
+SWAG_VERSION := v1.16.6
+
+# Приложение для make swag; по умолчанию первое из APPS.
+SWAG_APP ?= $(firstword $(APPS))
 ```
 
 - `APPS` — список приложений модуля. Из него строятся `build-all` и `help`.
@@ -54,7 +58,7 @@ SQLC_VERSION := v1.31.1
   Go-инструменты: `protoc`-плагины, `mockery`, `swag`, `goose` и прочее.
   `GOBIN=$(LOCAL_BIN) go install ...` не засоряет глобальный `GOPATH`, а
   `bin/` уже в `.gitignore`.
-- `MOCKERY_VERSION`, `GOOSE_VERSION`, `SQLC_VERSION` — версии инструментов.
+- `MOCKERY_VERSION`, `GOOSE_VERSION`, `SQLC_VERSION`, `SWAG_VERSION` — версии инструментов.
   Фиксируются, иначе обновление ломает генерацию или конфиг.
 - Отдельных `APP`, `GO`, `BIN`, `ARGS` нет: приложение задаётся в имени цели,
   компилятор — `go` из `PATH`, локальный конфиг вшит в `run-<app>`.
@@ -64,17 +68,22 @@ SQLC_VERSION := v1.31.1
 Go-инструменты ставятся в `bin/`, а не в глобальный `GOPATH`:
 
 ```make
-.PHONY: .bin-deps
+.PHONY: .bin-deps swag
 .bin-deps:
 	$(info Installing binary dependencies...)
 
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
+	GOBIN=$(LOCAL_BIN) go install github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
+
+swag:
+	$(LOCAL_BIN)/swag init -g ./cmd/$(SWAG_APP)/main.go -o ./internal/transport/$(SWAG_APP)/http/docs --parseDependency --parseInternal
 ```
 
 Цель точечная (с точкой), в обычный `make` не входит. Запускается явно:
-`make .bin-deps`. Генерация моков — `make mocks` (нужен `.bin-deps`).
+`make .bin-deps`. Генерация моков — `make mocks`, Swagger — `make swag`
+(обе цели требуют `.bin-deps`).
 
 Правило: **добавил пакет или инструмент — обнови `.bin-deps` в том же
 изменении**. Не оставляй установку «на потом».
@@ -82,7 +91,7 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
 | Что появилось в проекте | Что добавить |
 |---|---|
 | Postgres | `goose`; `sqlc`, если генерация запросов |
-| HTTP-сервер | `swag` для OpenAPI |
+| HTTP-сервер | `swag` для OpenAPI, версия — `SWAG_VERSION` |
 | gRPC | `protoc` (системный) + `protoc-gen-go`, `protoc-gen-go-grpc` |
 | Моки | `mockery` по умолчанию; `minimock` — если проект выбрал его |
 | Миграции | `goose` |
@@ -114,6 +123,8 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
   `skills/e2e-testing`.
 - `mocks` генерирует моки по `.mockery.yaml`; версия mockery фиксируется
   через `MOCKERY_VERSION`, а не `@latest`.
+- `swag` генерирует docs для `SWAG_APP`; версия фиксируется через
+  `SWAG_VERSION`, а не `@latest`.
 - `lint` не форматирует код; форматирование — `fmt`.
 - Секреты и деплой в `Makefile` не хранятся.
 - Не делать отдельный `Makefile` в `cmd/<app>/`: цели с именем приложения

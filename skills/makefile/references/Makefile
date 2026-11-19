@@ -4,10 +4,14 @@ LOCAL_BIN := $(CURDIR)/bin
 MOCKERY_VERSION := v3.9.1
 GOOSE_VERSION := v3.30.1
 SQLC_VERSION := v1.31.1
+SWAG_VERSION := v1.16.6
+
+# Приложение для make swag; по умолчанию первое из APPS.
+SWAG_APP ?= $(firstword $(APPS))
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build-all test test-race lint fmt tidy mocks .bin-deps clean
+.PHONY: help build-all test test-race lint fmt tidy mocks swag .bin-deps clean
 
 help:
 	@echo "apps: $(APPS)"
@@ -16,7 +20,8 @@ help:
 	@echo "  make build-all"
 	@echo "  make test | test-race | lint | fmt | tidy | clean"
 	@echo "  make mocks         # генерация моков по .mockery.yaml"
-	@echo "  make .bin-deps     # goose, sqlc, mockery"
+	@echo "  make swag          # Swagger для SWAG_APP"
+	@echo "  make .bin-deps     # goose, sqlc, mockery, swag"
 
 build-all: $(addprefix build-,$(APPS))
 
@@ -52,6 +57,9 @@ tidy:
 mocks:
 	$(LOCAL_BIN)/mockery --config=.mockery.yaml
 
+swag:
+	$(LOCAL_BIN)/swag init -g ./cmd/$(SWAG_APP)/main.go -o ./internal/transport/$(SWAG_APP)/http/docs --parseDependency --parseInternal
+
 # Go-инструменты — в bin/, не в GOPATH.
 # Версии — в переменных выше.
 .bin-deps:
@@ -60,8 +68,8 @@ mocks:
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
+	GOBIN=$(LOCAL_BIN) go install github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
 	# gRPC: protoc-gen-go, protoc-gen-go-grpc
-	# HTTP: github.com/swaggo/swag/cmd/swag
 	# minimock вместо mockery: github.com/gojuno/minimock/v3/cmd/minimock
 
 clean:

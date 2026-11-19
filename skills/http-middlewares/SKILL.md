@@ -277,6 +277,8 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 func Recovery(log *slog.Logger) Middleware {
@@ -308,7 +310,14 @@ func Recovery(log *slog.Logger) Middleware {
 					panic(http.ErrAbortHandler)
 				}
 
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				if err := responses.RespondWithError(
+					w,
+					http.StatusInternalServerError,
+					responses.CodeUnassigned,
+					http.StatusText(http.StatusInternalServerError),
+				); err != nil {
+					log.ErrorContext(r.Context(), "write recovery response", "error", err)
+				}
 			}()
 
 			next.ServeHTTP(w, r)
@@ -397,7 +406,10 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 type Principal struct {
@@ -411,13 +423,20 @@ type Authenticator interface {
 
 type principalKey struct{}
 
-func Auth(a Authenticator) Middleware {
+func Auth(log *slog.Logger, a Authenticator) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			principal, err := a.Authenticate(r.Context(), r)
 			if err != nil {
 				w.Header().Set("WWW-Authenticate", `Bearer realm="api"`)
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusUnauthorized,
+					responses.CodeUnassigned,
+					"unauthorized",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write auth response", "error", writeErr)
+				}
 				return
 			}
 
@@ -442,9 +461,14 @@ func PrincipalFromContext(ctx context.Context) (Principal, bool) {
 - Не логируй токен и заголовок `Authorization`.
 - Auth не должен ходить в БД на каждый запрос, если это можно заменить
   проверкой подписи/кешем; решение фиксируется в проекте.
-- Если API отвечает JSON, замени `http.Error` в Auth, RateLimit и Recovery
-  на общий `respond.Error`, иначе формат ошибок разъедется. Правила —
-  `skills/http-controllers`.
+- Auth, RateLimit и Recovery отвечают через `responses.RespondWithError`,
+  чтобы формат ошибок совпадал с контроллерами. Код ошибки — из
+  корпоративного справочника; до присвоения — `responses.CodeUnassigned`.
+- Конструкторы `responses` возвращают ошибку записи: логируй её, не
+  проглатывай через `_ =`.
+- Если middleware отвечает ошибкой, логируй тот же `code`, что ушёл в ответ:
+  лог-коллектор сортирует по нему, HTTP-статуса недостаточно.
+  Правила — `skills/http-controllers`.
 
 ## RateLimit
 
@@ -454,24 +478,41 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+
+	"<module>/internal/transport/<appname>/http/responses"
 )
 
 type Limiter interface {
 	Allow(ctx context.Context, key string) (bool, error)
 }
 
-func RateLimit(limiter Limiter, key func(*http.Request) string) Middleware {
+func RateLimit(log *slog.Logger, limiter Limiter, key func(*http.Request) string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			allowed, err := limiter.Allow(r.Context(), key(r))
 			if err != nil {
-				http.Error(w, "rate limiter unavailable", http.StatusServiceUnavailable)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusServiceUnavailable,
+					responses.CodeUnassigned,
+					"rate limiter unavailable",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write rate limit response", "error", writeErr)
+				}
 				return
 			}
 			if !allowed {
 				w.Header().Set("Retry-After", "60")
-				http.Error(w, "too many requests", http.StatusTooManyRequests)
+				if writeErr := responses.RespondWithError(
+					w,
+					http.StatusTooManyRequests,
+					responses.CodeUnassigned,
+					"too many requests",
+				); writeErr != nil {
+					log.ErrorContext(r.Context(), "write rate limit response", "error", writeErr)
+				}
 				return
 			}
 

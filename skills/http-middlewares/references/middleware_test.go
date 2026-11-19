@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func testLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()
@@ -115,7 +120,7 @@ func TestAuth(t *testing.T) {
 			http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 				t.Fatal("handler must not be called")
 			}),
-			Auth(fakeAuthenticator{err: errors.New("invalid token")}),
+			Auth(testLogger(), fakeAuthenticator{err: errors.New("invalid token")}),
 		)
 
 		rec := httptest.NewRecorder()
@@ -123,6 +128,7 @@ func TestAuth(t *testing.T) {
 
 		require.Equal(t, http.StatusUnauthorized, rec.Code)
 		require.NotEmpty(t, rec.Header().Get("WWW-Authenticate"))
+		require.JSONEq(t, `{"errors":[{"message":"unauthorized","code":0}]}`, rec.Body.String())
 	})
 
 	t.Run("principal in context", func(t *testing.T) {
@@ -135,7 +141,7 @@ func TestAuth(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, want, got)
 			}),
-			Auth(fakeAuthenticator{principal: want}),
+			Auth(testLogger(), fakeAuthenticator{principal: want}),
 		)
 
 		rec := httptest.NewRecorder()
@@ -156,7 +162,7 @@ func TestRateLimit(t *testing.T) {
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 			t.Fatal("handler must not be called")
 		}),
-		RateLimit(denyLimiter{}, func(*http.Request) string { return "client" }),
+		RateLimit(testLogger(), denyLimiter{}, func(*http.Request) string { return "client" }),
 	)
 
 	rec := httptest.NewRecorder()
@@ -164,4 +170,5 @@ func TestRateLimit(t *testing.T) {
 
 	require.Equal(t, http.StatusTooManyRequests, rec.Code)
 	require.Equal(t, "60", rec.Header().Get("Retry-After"))
+	require.JSONEq(t, `{"errors":[{"message":"too many requests","code":0}]}`, rec.Body.String())
 }

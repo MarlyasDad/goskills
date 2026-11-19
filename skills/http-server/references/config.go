@@ -19,7 +19,8 @@ const (
 // Config — настройки HTTP-сервера. Значения приходят из internal/config.
 // Таймауты необязательны: 0 — значение по умолчанию.
 type Config struct {
-	Host              string
+	Host string
+	// Port 0 — эфемерный порт для тестов; в проде — 8080.
 	Port              int
 	ReadHeaderTimeout time.Duration
 	ReadTimeout       time.Duration
@@ -57,7 +58,8 @@ func (c Config) withDefaults() Config {
 // Validate проверяет обязательные настройки сервера. Вызывается из NewServer
 // после withDefaults, а не из config.Load.
 func (c Config) Validate() error {
-	if c.Port < 1 || c.Port > 65535 {
+	// 0 — эфемерный порт для тестов; в проде задаётся 8080.
+	if c.Port < 0 || c.Port > 65535 {
 		return fmt.Errorf("http: port %d out of range", c.Port)
 	}
 	if c.ReadHeaderTimeout < 0 {

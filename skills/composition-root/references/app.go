@@ -10,10 +10,7 @@ import (
 	"time"
 
 	"<module>/internal/config"
-	"<module>/internal/infra/postgres"
-	"<module>/internal/services/api/document"
 	apihttp "<module>/internal/transport/api/http"
-	"<module>/internal/transport/api/http/documents"
 )
 
 // App — composition root приложения: собранные компоненты и их lifecycle.
@@ -24,27 +21,21 @@ type App struct {
 	cleanup         func() error
 }
 
-// New создаёт адаптеры, репозитории, сервисы, контроллеры, router и сервер.
-// Ничего не запускает и не биндит порт.
+// New собирает приложение. В каркасе есть только HTTP-сервер с системными
+// ручками; адаптеры, репозитории, сервисы и контроллеры добавляются сюда по
+// мере появления.
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
-	pg, err := postgres.New(cfg.Postgres)
-	if err != nil {
-		return nil, fmt.Errorf("postgres: %w", err)
-	}
-
-	repo := postgres.NewDocumentRepository(pg)
-	svc := document.New(repo)
-	handler := documents.New(log, svc)
-
 	router := apihttp.NewRouter(apihttp.Deps{
-		Config:   cfg.HTTP,
-		Log:      log,
-		Handlers: apihttp.HandlerSet{Documents: handler},
+		Config: cfg.HTTP,
+		Log:    log,
+		// Ready == nil — каркас всегда ready. Когда появится зависимость
+		// (БД, внешний сервис), передай func(ctx) error с проверкой Ping.
+		Ready:    nil,
+		Handlers: apihttp.HandlerSet{},
 	})
 
 	server, err := apihttp.NewServer(cfg.HTTP, log, router)
 	if err != nil {
-		pg.Close()
 		return nil, fmt.Errorf("http server: %w", err)
 	}
 
@@ -52,10 +43,6 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 		log:             log,
 		server:          server,
 		shutdownTimeout: cfg.ShutdownTimeout,
-		cleanup: func() error {
-			pg.Close()
-			return nil
-		},
 	}, nil
 }
 

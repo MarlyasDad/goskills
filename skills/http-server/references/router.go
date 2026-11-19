@@ -5,16 +5,16 @@ import (
 	"log/slog"
 	"net/http"
 
-	"<module>/internal/transport/<appname>/http/documents"
 	"<module>/internal/transport/<appname>/http/middleware"
 )
 
-// HandlerSet — обработчики, которые собрал composition root.
-type HandlerSet struct {
-	Documents *documents.Handler
-}
+// HandlerSet — бизнес-обработчики приложения. В каркасе пустой: есть только
+// системные ручки. Поле и импорт контроллера добавляются вместе с первым
+// бизнес-роутом.
+type HandlerSet struct{}
 
-// Deps — зависимости router. Здесь только то, что нужно для маршрутизации.
+// Deps — зависимости router. Ready == nil означает «всегда ready»: для
+// каркаса без зависимостей этого достаточно.
 type Deps struct {
 	Config   Config
 	Log      *slog.Logger
@@ -33,8 +33,8 @@ func NewRouter(d Deps) http.Handler {
 	mux := http.NewServeMux()
 
 	registerSystemRoutes(mux, d.Ready)
-	registerDocumentRoutes(mux, d)
 	registerOptionalRoutes(mux, d.Config)
+	// registerDocumentRoutes(mux, d) — добавить вместе с первым контроллером.
 
 	return middleware.Chain(
 		mux,
@@ -45,6 +45,9 @@ func NewRouter(d Deps) http.Handler {
 	)
 }
 
+// registerSystemRoutes регистрирует health/readiness всегда. Если проекту
+// нужен режим «строго две ручки», убери вызов этой функции или добавь
+// отдельный флаг; по умолчанию системные ручки включены.
 func registerSystemRoutes(mux *http.ServeMux, ready func(context.Context) error) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -61,28 +64,14 @@ func registerSystemRoutes(mux *http.ServeMux, ready func(context.Context) error)
 	})
 }
 
-func registerDocumentRoutes(mux *http.ServeMux, d Deps) {
-	if d.Handlers.Documents == nil {
-		return
-	}
-
-	create := http.Handler(http.HandlerFunc(d.Handlers.Documents.Create))
-	if d.Auth != nil {
-		create = middleware.Chain(create, middleware.Auth(d.Auth))
-	}
-
-	mux.Handle("POST /v1/documents", create)
-}
-
 // registerOptionalRoutes — заглушка без внешних зависимостей.
 //
-// Если проект использует Prometheus и Swagger, добавь зависимости и замени
-// тело функции:
+// Если проект использует Prometheus и Swagger, добавь зависимости:
 //
-//	import (
-//		"github.com/prometheus/client_golang/prometheus/promhttp"
-//		httpSwagger "github.com/swaggo/http-swagger"
-//	)
+//	go get github.com/prometheus/client_golang/prometheus/promhttp
+//	go get github.com/swaggo/http-swagger
+//
+// и замени тело функции:
 //
 //	func registerOptionalRoutes(mux *http.ServeMux, cfg Config) {
 //		if cfg.Metrics {

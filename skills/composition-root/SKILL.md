@@ -70,6 +70,9 @@ internal/app/<appname>/
 | 6 | Router: получает готовые контроллеры | `cfg.HTTP` |
 | 7 | HTTP-сервер и другие серверы/consumer'ы | `cfg.HTTP`, `cfg.ShutdownTimeout` |
 
+В каркасе без бизнес-логики шаги 2–5 пустые: создаются только router и
+сервер.
+
 Правила:
 
 - Конструктор адаптера принимает свой локальный `Config`, валидирует его и
@@ -97,10 +100,7 @@ import (
 	"time"
 
 	"<module>/internal/config"
-	"<module>/internal/infra/postgres"
-	"<module>/internal/services/api/document"
 	apihttp "<module>/internal/transport/api/http"
-	"<module>/internal/transport/api/http/documents"
 )
 
 type App struct {
@@ -111,24 +111,17 @@ type App struct {
 }
 
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
-	pg, err := postgres.New(cfg.Postgres)
-	if err != nil {
-		return nil, fmt.Errorf("postgres: %w", err)
-	}
-
-	repo := postgres.NewDocumentRepository(pg)
-	svc := document.New(repo)
-	handler := documents.New(log, svc)
-
 	router := apihttp.NewRouter(apihttp.Deps{
-		Config:   cfg.HTTP,
-		Log:      log,
-		Handlers: apihttp.HandlerSet{Documents: handler},
+		Config: cfg.HTTP,
+		Log:    log,
+		// nil — каркас всегда ready. Когда появится зависимость, передай
+		// func(ctx) error с проверкой Ping.
+		Ready:    nil,
+		Handlers: apihttp.HandlerSet{},
 	})
 
 	server, err := apihttp.NewServer(cfg.HTTP, log, router)
 	if err != nil {
-		pg.Close()
 		return nil, fmt.Errorf("http server: %w", err)
 	}
 
@@ -136,16 +129,14 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 		log:             log,
 		server:          server,
 		shutdownTimeout: cfg.ShutdownTimeout,
-		cleanup: func() error {
-			pg.Close()
-			return nil
-		},
 	}, nil
 }
 ```
 
-Если `pg.Close()` возвращает ошибку, верни её из `cleanup`; если нет —
-оберни в `func() error { pg.Close(); return nil }`, как выше.
+В каркасе нет адаптеров и контроллеров, поэтому `cleanup` не нужен. Когда
+появятся БД/клиенты, создай их здесь, положи закрытие в `cleanup`, а
+обработчики — в `apihttp.HandlerSet`. `Ready` замени на функцию, которая
+проверяет зависимости.
 
 ## Запуск и останов
 
@@ -260,7 +251,8 @@ type Component interface {
   фабрики/интерфейсы. По умолчанию это лишняя косвенность: wiring
   проверяется сборкой и интеграционным/e2e-тестом.
 - Жизненный цикл `Run` можно проверить с `net.Listen("tcp",
-  "127.0.0.1:0")`, но это уже интеграционный тест с реальным сокетом.
+  "127.0.0.1:0")`: `Config.Port = 0` разрешён как эфемерный порт. Это уже
+  интеграционный тест с реальным сокетом.
 
 ## Антипаттерны
 

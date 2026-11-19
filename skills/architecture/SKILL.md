@@ -43,7 +43,7 @@ metadata:
 - `cmd/<appname>` — только bootstrap: конфиг, логгер, `app.New`, сигналы ОС,
   запуск и останов. Адаптеров он не создаёт.
 - `config` импортирует только `Config` адаптеров и платформенных пакетов
-  (например, `logger.Config`).
+  (например, `postgres.Config`, `http.Config`, `logger.Config`).
 
 ## Архитектурные подходы
 
@@ -293,8 +293,8 @@ metadata:
   не вводится.
 - `app.go` импортирует `infra`, `transport`, `services`, `config`,
   `platform`: это composition root приложения.
-- `config` импортирует `Config` адаптеров и платформенных пакетов; обратного
-  импорта нет.
+- `config` импортирует `Config` адаптеров (включая
+  `transport/<appname>/http`) и платформенных пакетов; обратного импорта нет.
 - `transport` объявляет интерфейсы операций, чтобы не было цикла
   `app → transport → app`; реализуют их сервисы из
   `services/<appname>/<service>`.
@@ -328,7 +328,7 @@ metadata:
 | `internal/infra/<adapter>` | `domain`, `repository`, `platform`, сторонние клиенты | `app`, `services`, `transport`, `config`, `cmd` |
 | `internal/transport/<appname>` | `domain`, `shared`, `platform` | `app`, `infra`, `repository`, `services`, `config`, `cmd`, `app/<other>` |
 | `internal/platform/<pkg>` | stdlib, сторонние библиотеки | любые пакеты проекта |
-| `internal/config` | `infra/<adapter>` (только `Config`), `platform/<pkg>` (только `Config`), stdlib | `domain`, `services`, `app`, `repository`, `transport`, `cmd` |
+| `internal/config` | `infra/<adapter>` (только `Config`), `transport/<appname>/http` (только `Config`), `platform/<pkg>` (только `Config`), stdlib | `domain`, `services`, `app`, `repository`, `transport/<appname>` (кроме `http.Config`), `cmd` |
 | `internal/shared` | `domain` | `app`, `services`, `repository`, `infra`, `transport`, `platform`, `config`, `cmd` |
 | `cmd/<appname>` | `config`, `platform/logger`, `app/<appname>` | `infra`, `transport`, `services`, `repository`, `cmd/<other>`, `app/<other>` |
 
@@ -405,9 +405,11 @@ metadata:
 
 - Один пакет на модуль: конфиг-файл и набор env общие для всех приложений.
 - Импортирует пакеты адаптеров и платформы ради их `Config` (например,
-  `logger.Config`); реализации не вызывает.
+  `postgres.Config`, `http.Config`, `logger.Config`); реализации не вызывает.
+- Для HTTP-сервера разрешён импорт `transport/<appname>/http` только ради
+  `http.Config`; остальные пакеты транспорта `config` не импортирует.
 - Собирает `Config` композицией: вкладывает `postgres.Config`, `kafka.Config`,
-  `logger.Config` и т.п. Поля локальных конфигов не дублирует.
+  `http.Config`, `logger.Config` и т.п. Поля локальных конфигов не дублирует.
 - Импортируется из `cmd` и `app.go`.
 - Источники, композиция и валидация — `skills/config`.
 
@@ -482,7 +484,8 @@ metadata:
   тест вправе поднять адаптер напрямую.
 - `platform` импортирует сторонние библиотеки — это её смысл.
 - `config` импортирует `Config` адаптеров и платформы (например,
-  `logger.Config`): это сборка конфига, а не реализация.
+  `postgres.Config`, `http.Config`, `logger.Config`): это сборка конфига, а
+  не реализация.
 - `infra` импортирует `repository` ради проверки контракта
   (`var _ repository.X = ...`).
 
