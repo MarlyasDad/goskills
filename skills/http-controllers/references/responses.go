@@ -76,10 +76,8 @@ func RespondWithError(w http.ResponseWriter, status, code int, message string) e
 
 // ValidationError — ошибка валидации поля.
 type ValidationError struct {
-	// Field не входит в контракт 400: имя поля уже внутри Message.
-	// Если проект всё же отдаёт field, заполни его — omitempty оставит
-	// поведение совместимым.
-	Field   string `json:"field,omitempty"`
+	// Field — имя поля, к которому относится ошибка.
+	Field   string `json:"field"`
 	Message string `json:"message"`
 	// Code — код из корпоративного справочника; 0 — ещё не присвоен.
 	Code int `json:"code"`

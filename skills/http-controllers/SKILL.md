@@ -118,13 +118,15 @@ func (r CreateRequest) validate() responses.ValidationErrors {
 
 	if r.Title == "" {
 		errs = append(errs, responses.ValidationError{
-			Message: "title: value is required",
+			Field:   "title",
+			Message: "value is required",
 			Code:    responses.CodeUnassigned,
 		})
 	}
 	if r.Kind == "" {
 		errs = append(errs, responses.ValidationError{
-			Message: "kind: value is required",
+			Field:   "kind",
+			Message: "value is required",
 			Code:    responses.CodeUnassigned,
 		})
 	}
@@ -158,9 +160,8 @@ func (r CreateRequest) toInput() shared.CreateDocumentInput {
   разные случаи, если это важно контракту.
 - `json:"-"` — для полей, которые заполняет сервер (ID пользователя из
   контекста, вычисленные права).
-- В 400 имя поля уже внутри `Message` (`"title: value is required"`).
-  `ValidationError.Field` имеет `omitempty` и не заполняется; иначе ответ
-  разойдётся с контрактом `{errors:[{message, code}]}`.
+- В 400 имя поля передаётся отдельным `field`, а `message` содержит только
+  текст ошибки: `{"field":"title","message":"value is required","code":0}`.
 - Не добавлять в DTO бизнес-логику; только маппинг и форматную валидацию.
 
 ## response.go
@@ -451,8 +452,8 @@ func RespondWithError(w http.ResponseWriter, status, code int, message string) e
 
 ```go
 type ValidationError struct {
-	// Field не входит в контракт 400: имя поля уже внутри Message.
-	Field   string `json:"field,omitempty"`
+	// Field — имя поля, к которому относится ошибка.
+	Field   string `json:"field"`
 	Message string `json:"message"`
 	// Code — код из корпоративного справочника; 0 — ещё не присвоен.
 	Code int `json:"code"`
@@ -475,7 +476,7 @@ func RespondWithValidationErrors(w http.ResponseWriter, errs []ValidationError) 
 - `Content-Type` — `application/json; charset=utf-8`.
 - Форма ошибки одна на весь API:
   `{"errors":[{"message":"...","code":0}]}`. Валидация:
-  `{"errors":[{"message":"title: ...","code":0}]}`.
+  `{"errors":[{"field":"title","message":"...","code":0}]}`.
 - `0` здесь — `responses.CodeUnassigned`, пока эксплуатация не присвоила
   код из корпоративного справочника.
 - Если контракт уже другой — следуй контракту, но не смешивай `http.Error`
@@ -621,7 +622,7 @@ func TestCreate(t *testing.T) {
 			body:       `{"kind":"inspection"}`,
 			wantStatus: http.StatusBadRequest,
 			wantBody: fmt.Sprintf(
-				`{"errors":[{"message":"title: value is required","code":%d}]}`,
+				`{"errors":[{"field":"title","message":"value is required","code":%d}]}`,
 				responses.CodeUnassigned,
 			),
 		},

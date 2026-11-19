@@ -107,7 +107,6 @@ type App struct {
 	log             *slog.Logger
 	server          *http.Server
 	shutdownTimeout time.Duration
-	cleanup         func() error
 }
 
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
@@ -133,22 +132,17 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 }
 ```
 
-В каркасе нет адаптеров и контроллеров, поэтому `cleanup` не нужен. Когда
-появятся БД/клиенты, создай их здесь, положи закрытие в `cleanup`, а
-обработчики — в `apihttp.HandlerSet`. `Ready` замени на функцию, которая
-проверяет зависимости.
+В каркасе нет адаптеров и контроллеров, поэтому поля `cleanup` нет. Когда
+появятся БД/клиенты, создай их здесь, добавь в `App` поле
+`cleanup func() error` и `defer` в `Run`, а обработчики — в
+`apihttp.HandlerSet`. `Ready` замени на функцию, которая проверяет
+зависимости.
 
 ## Запуск и останов
 
 ```go
 // internal/app/<appname>/app.go
-func (a *App) Run(ctx context.Context) (err error) {
-	defer func() {
-		if a.cleanup != nil {
-			err = errors.Join(err, a.cleanup())
-		}
-	}()
-
+func (a *App) Run(ctx context.Context) error {
 	ln, err := net.Listen("tcp", a.server.Addr)
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", a.server.Addr, err)
@@ -200,8 +194,6 @@ func (a *App) Run(ctx context.Context) (err error) {
   ошибка.
 - `Shutdown` не ждёт hijacked-соединения (WebSocket). Если они есть, их
   закрывает отдельный компонент, а не HTTP-сервер.
-- `cleanup` вызывается всегда, в том числе при ошибке запуска.
-- `errors.Join` сохраняет и ошибку `Run`, и ошибку закрытия ресурсов.
 
 `main` передаёт сюда `signal.NotifyContext` и не занимается lifecycle сам;
 полный `main.go` — `skills/bootstrap/references/main.go`.
@@ -232,9 +224,10 @@ type Component interface {
 
 - Каждый `New` возвращает `(T, error)`; `app.go` проверяет ошибку и
   добавляет контекст: `fmt.Errorf("postgres: %w", err)`.
-- Если ресурс создан, но приложение не запустилось, он должен быть закрыт.
-  Для одного-двух ресурсов хватает `defer` с флагом успеха или `cleanup` в
-  `App`.
+- В каркасе внешних ресурсов нет, поэтому `cleanup` не заводится заранее.
+  Когда ресурс появляется и создан, но приложение не запустилось, он должен
+  быть закрыт: для одного-двух ресурсов хватает `defer` с флагом успеха или
+  поля `cleanup func() error` в `App`.
 - Не логируй ошибку и не возвращай её одновременно на одном уровне:
   либо `log.Error` + `return nil`, либо `return fmt.Errorf(...)`.
 - Не вызывай `log.Fatal`/`os.Exit` в `app.go`: это ломает тесты и
@@ -284,7 +277,8 @@ type Component interface {
 ## Эталон
 
 `references/app.go` — полный `App`: `New`, сборка HTTP-сервера, `Run`,
-`net.Listen`, `Serve`, `Shutdown`/`Close`, `cleanup`.
+`net.Listen`, `Serve`, `Shutdown`/`Close`. Поле `cleanup` добавляется вместе
+с первым внешним ресурсом.
 
 ## Границы
 

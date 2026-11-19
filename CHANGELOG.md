@@ -1,4 +1,6 @@
 ## 2026-11-19
+- composition-root: убран мёртвый `cleanup` из каркаса — поле добавляется вместе с первым внешним ресурсом (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-controllers: контракт 400 вернул отдельное поле `field`; `ValidationError.Field` обязателен, `message` содержит только текст ошибки (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/bootstrap: `@host`/`@schemes` убраны из Swagger-аннотаций; `docs.SwaggerInfo` настраивается в рантайме — host/basePath из `HTTP_SWAGGER_*`, version из `SERVICE_VERSION` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/http-controllers/project-structure: группы контроллеров `internal`/`external` заменены на `internalapi`/`externalapi`; `internal` — зарезервированное имя Go, пакет снаружи не импортируется (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: в `configs/.env.example` расписаны значения HTTP по умолчанию — таймауты 5s/15s/30s/60s, 1 MiB, CORS выключен, metrics/swagger false (Alexander Yudaev <yudaev.alex@gmail.com>)

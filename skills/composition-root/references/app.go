@@ -18,7 +18,6 @@ type App struct {
 	log             *slog.Logger
 	server          *http.Server
 	shutdownTimeout time.Duration
-	cleanup         func() error
 }
 
 // New собирает приложение. В каркасе есть только HTTP-сервер с системными
@@ -47,14 +46,8 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 }
 
 // Run запускает сервер, ждёт отмены контекста или ошибки и останавливает
-// компоненты. Cleanup вызывается всегда, в том числе при ошибке запуска.
-func (a *App) Run(ctx context.Context) (err error) {
-	defer func() {
-		if a.cleanup != nil {
-			err = errors.Join(err, a.cleanup())
-		}
-	}()
-
+// компоненты. В каркасе нет внешних ресурсов, поэтому cleanup не нужен.
+func (a *App) Run(ctx context.Context) error {
 	ln, err := net.Listen("tcp", a.server.Addr)
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", a.server.Addr, err)

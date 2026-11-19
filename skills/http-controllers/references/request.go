@@ -17,13 +17,15 @@ func (r CreateRequest) validate() responses.ValidationErrors {
 
 	if r.Title == "" {
 		errs = append(errs, responses.ValidationError{
-			Message: "title: value is required",
+			Field:   "title",
+			Message: "value is required",
 			Code:    responses.CodeUnassigned,
 		})
 	}
 	if r.Kind == "" {
 		errs = append(errs, responses.ValidationError{
-			Message: "kind: value is required",
+			Field:   "kind",
+			Message: "value is required",
 			Code:    responses.CodeUnassigned,
 		})
 	}

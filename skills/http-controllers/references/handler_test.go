@@ -65,7 +65,7 @@ func TestCreate(t *testing.T) {
 			body:       `{"kind":"inspection"}`,
 			wantStatus: http.StatusBadRequest,
 			wantBody: fmt.Sprintf(
-				`{"errors":[{"message":"title: value is required","code":%d}]}`,
+				`{"errors":[{"field":"title","message":"value is required","code":%d}]}`,
 				responses.CodeUnassigned,
 			),
 		},
