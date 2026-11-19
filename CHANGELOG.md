@@ -1,4 +1,7 @@
 ## 2026-11-19
+- skill-issue: добавлен навык для текста issue о конфликтах и багах в навыках; предлагает отправить автору через `gh`, без подтверждения не отправляет (Alexander Yudaev <yudaev.alex@gmail.com>)
+- agents-md: правило о явном сообщении конфликтов навыков добавлено в скилл и шаблон `references/AGENTS.md`; новые проекты получают его из каркаса (Alexander Yudaev <yudaev.alex@gmail.com>)
+- process: в workflow добавлено явное сообщение о конфликтах между навыками; правило и чек-лист закреплены в skill-creator (Alexander Yudaev <yudaev.alex@gmail.com>)
 - testing: разрешено тестировать чистые приватные функции напрямую; снят конфликт с тестами `parseLevel` и `newLogger` в logger (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture/config: разрешён импорт `config → platform/<pkg>` только ради `Config` (например, `logger.Config`); противоречие с logger и bootstrap устранено (Alexander Yudaev <yudaev.alex@gmail.com>)
 - zen: добавлен навык с The Zen of Python на Go; правило «явное лучше неявного» закреплено в architecture и skill-creator (Alexander Yudaev <yudaev.alex@gmail.com>)

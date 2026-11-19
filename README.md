@@ -33,7 +33,7 @@
 | Конфиг и тесты | `config`, `testing` |
 | Наблюдаемость | `logger` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `agents-md` |
-| Процесс | `commit-conventions`, `changelog`, `skill-creator` |
+| Процесс | `commit-conventions`, `changelog`, `skill-creator`, `skill-issue` |
 | Промпты | `prompt-engineering` |
 
 Принципы:
