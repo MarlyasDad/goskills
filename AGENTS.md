@@ -42,6 +42,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `bootstrap` | создание Go-проекта с нуля |
 | `project-structure` | где лежит файл, раскладка каталогов |
 | `architecture` | зависимости и границы слоёв |
+| `zen` | The Zen of Python на Go: явное, простое, читаемое |
 | `services` | каталог на сервис, use cases, DTO, оркестрация и саги |
 | `transport` | HTTP/gRPC/Kafka/WebSocket, тонкие контроллеры и маппинг ошибок |
 | `config` | источники, композиция и валидация конфига |

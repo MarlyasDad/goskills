@@ -1,4 +1,5 @@
 ## 2026-11-19
+- zen: добавлен навык с The Zen of Python на Go; правило «явное лучше неявного» закреплено в architecture и skill-creator (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: явно закреплено, что значение с двоеточием оборачивается в двойные кавычки (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлены outbox, inbox, fan-in/fan-out, DLQ, CDC и backpressure — надёжная доставка, идемпотентность и цена блокировок (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: проверка frontmatter переведена с Ruby на Go (`references/check_frontmatter.go`); закреплено правило — примеры только на Go и в едином стиле репозитория (AGENTS.md, skill-creator) (Alexander Yudaev <yudaev.alex@gmail.com>)

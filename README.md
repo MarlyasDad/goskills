@@ -27,6 +27,7 @@
 | Группа | Навыки |
 |---|---|
 | Каркас и архитектура | `bootstrap`, `project-structure`, `architecture` |
+| Принципы | `zen` |
 | Прикладной слой | `services` |
 | Транспорт | `transport` |
 | Конфиг и тесты | `config`, `testing` |
