@@ -526,8 +526,9 @@ goskills. `bootstrap` его не пересоздаёт: приводим к к
    входящие — в `transport`. Границы — `skills/architecture`.
 6. **Моки.** `.mockery.yaml` и `make mocks`; `mockery` — в `.bin-deps` с
    зафиксированной версией.
-7. **Проверка.** `go mod tidy`, `go build ./...`, `go vet ./...`,
-   `go test ./...`, `make build-all`; grep по старому префиксу модуля пуст.
+7. **Проверка.** `go mod tidy`, `make .bin-deps`, `make mocks`,
+   `go build ./...`, `go vet ./...`, `make test`, `make test-race`,
+   `make build-all`; grep по старому префиксу модуля пуст.
 8. **AGENTS.md.** Записать оставшиеся осознанные отклонения и их причину.
 
 ## Границы
