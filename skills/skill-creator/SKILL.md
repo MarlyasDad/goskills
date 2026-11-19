@@ -31,6 +31,21 @@ skills/
   `check_frontmatter.go`.
 - Пути в тексте — относительно навыка: `references/Makefile`.
 
+## Проектные навыки
+
+`skill-creator` описывает навыки **goskills**. Если навык создаётся внутри
+проекта и нужен только этому проекту:
+
+- общие правила те же: `name`, `description`, один вопрос, явные шаги,
+  `references/`;
+- каталог — тот, который читает инструмент проекта (`<skills-dir>/<id>/`), а
+  не `skills/` этого репозитория;
+- таблицы `README.md`/`AGENTS.md`, `CHANGELOG.md` и шаблон `agents-md`
+  goskills не трогай;
+- проектные решения и ссылку на навык запиши в `AGENTS.md` проекта;
+- если проектный навык противоречит goskills — сообщи через
+  `skills/skill-issue`, не прячь конфликт в проектном `AGENTS.md`.
+
 ## Frontmatter
 
 ```yaml

@@ -1,4 +1,5 @@
 ## 2026-11-19
+- skill-creator: явно разделены навыки goskills и проектные; для проектных не нужны таблицы и CHANGELOG goskills (Alexander Yudaev <yudaev.alex@gmail.com>)
 - process: при добавлении навыка обязали синхронизировать таблицы README/AGENTS.md и шаблон agents-md; причина — пропущенные logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: в шаблон `references/AGENTS.md` добавлены ссылки на logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)
 - dockerignore: добавлен навык и эталон `.dockerignore` — контекст сборки, секреты, проверка; `.dockerignore` внесён в каркас проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
