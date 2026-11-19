@@ -1,4 +1,5 @@
 ## 2026-11-19
+- makefile: комментарий про версии заменён на ссылку на переменные выше (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: goose и sqlc зафиксированы переменными `GOOSE_VERSION` и `SQLC_VERSION`; `@latest` в эталоне больше нет (Alexander Yudaev <yudaev.alex@gmail.com>)
 - project-structure/config/bootstrap: `internal/config/file.go` всегда входит в каркас; в k8s `-config` пустой, `LoadFile` — no-op (Alexander Yudaev <yudaev.alex@gmail.com>)
 - logger: объяснено, почему `SERVICE_ENVIRONMENT` остаётся строкой, а не enum — метаданные, открытый набор стендов, логгер не падает (Alexander Yudaev <yudaev.alex@gmail.com>)

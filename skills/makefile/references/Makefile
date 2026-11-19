@@ -53,7 +53,7 @@ mocks:
 	$(LOCAL_BIN)/mockery --config=.mockery.yaml
 
 # Go-инструменты — в bin/, не в GOPATH.
-# Версии зафиксировать вместо @latest.
+# Версии — в переменных выше.
 .bin-deps:
 	$(info Installing binary dependencies...)
 
