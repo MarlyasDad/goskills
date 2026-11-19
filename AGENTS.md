@@ -46,7 +46,9 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `services` | каталог на сервис, use cases, DTO, оркестрация и саги |
 | `transport` | HTTP/gRPC/Kafka/WebSocket, тонкие контроллеры и маппинг ошибок |
 | `config` | источники, композиция и валидация конфига |
-| `testing` | unit, интеграционные и e2e-тесты |
+| `testing` | unit-тесты: table-driven, testify/mockery, фейки |
+| `integration-testing` | интеграционные тесты с реальной инфраструктурой, по согласованию |
+| `e2e-testing` | e2e-сценарии; владелец — тестировщик |
 | `logger` | логгер на slog, уровни, форматы, общие атрибуты |
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |
 | `gitignore` | что не коммитить |
@@ -133,6 +135,8 @@ git diff --check
 - `Makefile` один на модуль/workspace, цели с именем приложения:
   `build-<app>`, `run-<app>`; версия Go только в `go.mod`.
 - Тестовый стек по умолчанию — `mockery` + `testify`; моки генерируются.
+- Тесты: unit — `skills/testing`; интеграционные — `skills/integration-testing`
+  по согласованию; e2e — `skills/e2e-testing`, владелец — тестировщик.
 - Логгер один на приложение: `slog` в `internal/platform/logger`, настройки —
   через `logger.Config`, env читает `internal/config`.
 - `.agentignore` не читается OpenCode; для него правила переносятся в

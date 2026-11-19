@@ -1,6 +1,6 @@
 ---
 name: makefile
-description: "Правила Makefile Go-проекта: один файл на модуль, цели с именем приложения build-<app> и run-<app>, локальный конфиг, тесты, lint и инструменты в bin/. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing."
+description: "Правила Makefile Go-проекта: один файл на модуль, цели с именем приложения build-<app> и run-<app>, локальный конфиг, тесты, lint и инструменты в bin/. Используется при создании или изменении Makefile. Раскладка — skills/project-structure, тесты — skills/testing, integration-testing, e2e-testing."
 license: MIT
 compatibility: opencode
 metadata:
@@ -11,8 +11,9 @@ metadata:
 # Makefile Go-проекта
 
 Навык отвечает на вопрос «**какие команды есть у проекта и как они
-называются**». Раскладка каталогов — в `skills/project-structure`; тесты — в
-`skills/testing`; конфиг — в `skills/config`.
+называются**». Раскладка каталогов — в `skills/project-structure`; unit-тесты —
+в `skills/testing`, интеграционные — в `skills/integration-testing`, e2e — в
+`skills/e2e-testing`; конфиг — в `skills/config`.
 
 ## Файл
 
@@ -102,8 +103,9 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
 - `build-<app>` кладёт артефакт в `bin/<app>`; `bin/` не коммитится.
 - `run-<app>` всегда использует `configs/.env.local`; в k8s конфиг приходит
   из env, Makefile там не участвует.
-- `test` не ходит в сеть. Интеграционные тесты — отдельная цель, если нужны
-  внешние сервисы (`test-integration`).
+- `test` не ходит в сеть. Интеграционные тесты — отдельная цель
+  `test-integration` по `skills/integration-testing`, e2e — `test-e2e` по
+  `skills/e2e-testing`.
 - `lint` не форматирует код; форматирование — `fmt`.
 - Секреты и деплой в `Makefile` не хранятся.
 - Не делать отдельный `Makefile` в `cmd/<app>/`: цели с именем приложения

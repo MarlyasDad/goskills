@@ -1,4 +1,9 @@
 ## 2026-11-19
+- testing: убран раздел «Флейки» — unit-тест должен быть детерминирован; нестабильные тесты (flaky) описаны в integration/e2e (Alexander Yudaev <yudaev.alex@gmail.com>)
+- testing: навык сужен до unit-тестов; `testify`/`mockery` остаются стандартом, интеграционные и e2e вынесены отдельно (Alexander Yudaev <yudaev.alex@gmail.com>)
+- integration-testing: добавлен навык — реальные БД/брокеры, тег `integration`, контрактные наборы, по согласованию (Alexander Yudaev <yudaev.alex@gmail.com>)
+- e2e-testing: добавлен навык — критические сценарии, отдельный стенд, владелец — тестировщик (Alexander Yudaev <yudaev.alex@gmail.com>)
+- agents-md: в шаблоне и правилах тесты разделены на unit, интеграционные и e2e (Alexander Yudaev <yudaev.alex@gmail.com>)
 - config: только stdlib и один env-файл — `KEY=VALUE`; `godotenv`/`envconfig` не нужны, JSON/YAML убраны; `parseFile` возвращает ошибку отсутствующего или битого файла (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: `App.Run` описан как точка graceful shutdown — таймаут, `Stop`, ожидание `WaitGroup`; `main` не держит wg (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: `main.go` вынесен в `references/main.go` — `main` → `run(path)`, пустой `-config`, `signal.NotifyContext`, стабильные логи без `MustLoad`/`panic` (Alexander Yudaev <yudaev.alex@gmail.com>)

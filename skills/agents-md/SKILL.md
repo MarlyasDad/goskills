@@ -27,7 +27,7 @@ metadata:
 | Команды | реальные цели `Makefile`: `build-<app>`, `run-<app>`, `test`, `test-race`, `lint`, `.bin-deps` |
 | Workflow | уточнить → slice → артефакты → проверки → коммит по запросу → итог |
 | Конфиг | один `Config` на модуль, env в k8s, локально `configs/.env.local`, секреты |
-| Тесты | `testify`/`mockery`, моки генерируются, команды тестов |
+| Тесты | unit — `testify`/`mockery`; integration — по согласованию; e2e — тестировщики; команды |
 | Документация | где спеки, индекс, правило «1–2 релевантных, не все» |
 | Скиллы | какие использовать и когда; без дублирования их текста |
 | Решения | что сделано иначе, чем в навыке, и почему |
@@ -132,5 +132,6 @@ metadata:
 - «Где лежит файл» — `skills/project-structure`.
 - «Что можно импортировать» — `skills/architecture`.
 - «Как читать конфиг» — `skills/config`.
-- «Как тестировать» — `skills/testing`.
+- «Как тестировать» — `skills/testing` (unit), `skills/integration-testing`,
+  `skills/e2e-testing`.
 - «Как оформить навык» — `skills/skill-creator`.

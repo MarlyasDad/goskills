@@ -45,9 +45,9 @@
 
 ## Тесты
 
-- `testify/require`
-- `mockery`: моки генерируются, руками не пишутся
-- правила — `skills/testing`
+- unit: `testify/require`, `mockery`; правила — `skills/testing`
+- интеграционные — `skills/integration-testing`, добавляются по согласованию
+- e2e — `skills/e2e-testing`, владелец — тестировщик
 
 ## Документация
 
@@ -61,7 +61,9 @@
 - раскладка — `skills/project-structure`
 - зависимости — `skills/architecture`
 - конфиг — `skills/config`
-- тесты — `skills/testing`
+- unit-тесты — `skills/testing`
+- интеграционные — `skills/integration-testing`
+- e2e — `skills/e2e-testing`
 - логгер — `skills/logger`
 - `Makefile` — `skills/makefile`
 - `.gitignore` — `skills/gitignore`

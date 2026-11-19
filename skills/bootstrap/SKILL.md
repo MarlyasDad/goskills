@@ -13,8 +13,9 @@ metadata:
 Навык задаёт **порядок первых шагов** нового Go-проекта и минимальный
 результат, после которого проект собирается, запускается и готов к развитию.
 Раскладку каталогов определяет `skills/project-structure`, зависимости —
-`skills/architecture`, конфигурацию — `skills/config`, тесты —
-`skills/testing`.
+`skills/architecture`, конфигурацию — `skills/config`, unit-тесты —
+`skills/testing`, интеграционные — `skills/integration-testing`, e2e —
+`skills/e2e-testing`.
 
 ## Когда применять
 
@@ -510,6 +511,8 @@ make build-all
 - первая операция → `internal/services/<appname>/<service>/`;
 - первый порт и адаптер → `internal/repository/`, `internal/infra/<adapter>/`;
 - первый входящий адаптер → `internal/transport/<appname>/`;
-- первый интеграционный тест → `tests/` с тегом `integration`;
+- первый интеграционный тест → `tests/integration/` по
+  `skills/integration-testing`;
+- e2e — по `skills/e2e-testing`;
 - коммиты — по `skills/commit-conventions`, запись — по `skills/changelog`,
-  тесты — по `skills/testing`.
+  unit-тесты — по `skills/testing`.

@@ -30,7 +30,8 @@
 | Принципы | `zen` |
 | Прикладной слой | `services` |
 | Транспорт | `transport` |
-| Конфиг и тесты | `config`, `testing` |
+| Конфиг | `config` |
+| Тесты | `testing`, `integration-testing`, `e2e-testing` |
 | Наблюдаемость | `logger` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `dockerignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator`, `skill-issue` |

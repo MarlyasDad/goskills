@@ -22,7 +22,7 @@ HTTP-контроллеры — это часть транспорта, отде
 - Какие импорты допустимы — `skills/architecture`.
 - Как устроен сервис, который вызывается, — `skills/services`.
 - Где лежит каталог — `skills/project-structure`.
-- Как тестировать — `skills/testing`.
+- Как тестировать — `skills/testing`, `skills/integration-testing`.
 
 ## Каталог
 
@@ -158,6 +158,7 @@ func (s *Service) Register(
 - `httptest` для HTTP, `bufconn` для gRPC.
 - Фейки интерфейса операции, без реальной БД и сети.
 - Проверяются: разбор запроса, коды, маппинг ошибок, граничные случаи.
+- Реальный брокер и полный стек — `skills/integration-testing`.
 - Подробно — в `skills/testing`.
 
 ## Антипаттерны

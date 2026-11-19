@@ -317,8 +317,10 @@ go mod init <module>
 
 ### tests/
 
-- Только интеграционные и e2e-тесты, которым нужны внешние сервисы
-  (БД, Kafka, MinIO).
+- `tests/integration/` — интеграционные тесты с реальными сервисами
+  (БД, Kafka, MinIO). Правила — `skills/integration-testing`.
+- `tests/e2e/` — критические сценарии через весь стек. Правила —
+  `skills/e2e-testing`.
 - Unit-тесты — `_test.go` рядом с тестируемым кодом.
 - Фикстуры — `testdata/` рядом с тестом.
 - `tests/` не повторяет структуру `internal/`: группируется по сценарию.
@@ -366,7 +368,8 @@ go mod init <module>
 | DI приложения, создание адаптеров | `internal/app/<appname>/app.go` |
 | Bootstrap, сигналы ОС | `cmd/<appname>/main.go` |
 | Контракт API | `api/` |
-| Интеграционный или e2e-тест | `tests/` |
+| Интеграционный тест | `tests/integration/` |
+| E2E-тест | `tests/e2e/` |
 | Unit-тест | рядом с кодом, `<file>_test.go` |
 | Общий прикладной тип для 2+ приложений | `internal/shared/` |
 | Код для внешних потребителей | `pkg/` — только если правда нужно |
@@ -424,7 +427,8 @@ go mod init <module>
    появлении первого порта, операции и адаптера.
 9. `Makefile`, `Dockerfile`, `.dockerignore` — когда появляются команды
    сборки и деплой.
-10. `tests/` — при появлении первого интеграционного теста.
+10. `tests/integration/` — по `skills/integration-testing`;
+    `tests/e2e/` — по `skills/e2e-testing`.
 
 Пустые каталоги на любом шаге не создаются.
 

@@ -13,7 +13,8 @@ metadata:
 Навык отвечает на вопросы «**как проектировать сервис**», «**где его код**» и
 «**как он оркестрирует**». Какие импорты допустимы — в
 `skills/architecture`; физическая раскладка — в `skills/project-structure`;
-тесты — в `skills/testing`.
+unit-тесты — в `skills/testing`, интеграционные — в
+`skills/integration-testing`.
 
 ## Термины
 
@@ -129,6 +130,7 @@ func New(users UserRepository, subscriptions SubscriptionRepository, clock Clock
 - Unit на каждый метод: успех, ошибка репозитория, граничные случаи.
 - Зависимости — фейки или сгенерированные моки; без реальной БД и HTTP.
 - Транзакция и идемпотентность проверяются на фейках.
+- Реальная БД и транзакция — `skills/integration-testing`.
 - Подробно — в `skills/testing`.
 
 ## Антипаттерны
