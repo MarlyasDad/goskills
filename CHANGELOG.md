@@ -1,4 +1,5 @@
 ## 2026-11-19
+- architecture/config: разрешён импорт `config → platform/<pkg>` только ради `Config` (например, `logger.Config`); противоречие с logger и bootstrap устранено (Alexander Yudaev <yudaev.alex@gmail.com>)
 - zen: добавлен навык с The Zen of Python на Go; правило «явное лучше неявного» закреплено в architecture и skill-creator (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: явно закреплено, что значение с двоеточием оборачивается в двойные кавычки (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: добавлены outbox, inbox, fan-in/fan-out, DLQ, CDC и backpressure — надёжная доставка, идемпотентность и цена блокировок (Alexander Yudaev <yudaev.alex@gmail.com>)

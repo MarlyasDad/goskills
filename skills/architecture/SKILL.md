@@ -41,7 +41,8 @@ metadata:
 - `infra` и `transport` не знают друг о друге. Связывает их `app.go`.
 - `cmd/<appname>` — только bootstrap: конфиг, логгер, `app.New`, сигналы ОС,
   запуск и останов. Адаптеров он не создаёт.
-- `config` импортирует только `Config` адаптеров.
+- `config` импортирует только `Config` адаптеров и платформенных пакетов
+  (например, `logger.Config`).
 
 ## Архитектурные подходы
 
@@ -289,7 +290,8 @@ metadata:
   не вводится.
 - `app.go` импортирует `infra`, `transport`, `services`, `config`,
   `platform`: это composition root приложения.
-- `config` импортирует `Config` адаптеров; обратного импорта нет.
+- `config` импортирует `Config` адаптеров и платформенных пакетов; обратного
+  импорта нет.
 - `transport` объявляет интерфейсы операций, чтобы не было цикла
   `app → transport → app`; реализуют их сервисы из
   `services/<appname>/<service>`.
@@ -323,7 +325,7 @@ metadata:
 | `internal/infra/<adapter>` | `domain`, `repository`, `platform`, сторонние клиенты | `app`, `services`, `transport`, `config`, `cmd` |
 | `internal/transport/<appname>` | `domain`, `shared`, `platform` | `app`, `infra`, `repository`, `services`, `config`, `cmd`, `app/<other>` |
 | `internal/platform/<pkg>` | stdlib, сторонние библиотеки | любые пакеты проекта |
-| `internal/config` | `infra/<adapter>` (только `Config`), stdlib | `domain`, `services`, `app`, `repository`, `transport`, `platform`, `cmd` |
+| `internal/config` | `infra/<adapter>` (только `Config`), `platform/<pkg>` (только `Config`), stdlib | `domain`, `services`, `app`, `repository`, `transport`, `cmd` |
 | `internal/shared` | `domain` | `app`, `services`, `repository`, `infra`, `transport`, `platform`, `config`, `cmd` |
 | `cmd/<appname>` | `config`, `platform/logger`, `app/<appname>` | `infra`, `transport`, `services`, `repository`, `cmd/<other>`, `app/<other>` |
 
@@ -392,16 +394,16 @@ metadata:
 - stdlib и сторонние библиотеки.
 - Не импортирует пакеты проекта: иначе платформа потянет за собой домен и
   станет вторым ядром.
-- Может использоваться адаптерами, `app.go` и `cmd`; `domain` и `shared` —
-  нет.
+- Может использоваться адаптерами, `config` (только `Config`), `app.go` и
+  `cmd`; `domain` и `shared` — нет.
 
 ### config
 
 - Один пакет на модуль: конфиг-файл и набор env общие для всех приложений.
-- Импортирует пакеты адаптеров ради их `Config`; реализации адаптеров не
-  вызывает.
-- Собирает `Config` композицией: вкладывает `postgres.Config`, `kafka.Config`
-  и т.п. Поля локальных конфигов не дублирует.
+- Импортирует пакеты адаптеров и платформы ради их `Config` (например,
+  `logger.Config`); реализации не вызывает.
+- Собирает `Config` композицией: вкладывает `postgres.Config`, `kafka.Config`,
+  `logger.Config` и т.п. Поля локальных конфигов не дублирует.
 - Импортируется из `cmd` и `app.go`.
 - Источники, композиция и валидация — `skills/config`.
 
@@ -441,8 +443,8 @@ metadata:
 - Общий код приложений живёт в `domain`, `repository`, `infra`, `platform`,
   `shared`, `config`. Сервисы — в `services/<appname>/<service>`.
 - Конфиг один на модуль: `config.Config` общий, каждое приложение берёт свои
-  секции. Локальные конфиги адаптеров (`postgres.Config`) вкладываются, а не
-  копируются.
+  секции. Локальные конфиги адаптеров и платформы (`postgres.Config`,
+  `logger.Config`) вкладываются, а не копируются.
 - Если двум приложениям нужно одно правило — это доменный сервис или общий
   пакет `domain`/`shared`, а не импорт `services/<other>`.
 
@@ -465,7 +467,7 @@ metadata:
 | `repository` импортирует `infra` | цикл порта и реализации | интерфейс отдельно, реализация в `infra` |
 | `services/<appname>/<service>` импортирует `app` | обратная стрелка | `app.go` связывает сервисы и адаптеры |
 | `infra` импортирует `config` | адаптер зависит от схемы приложения | настройки аргументами, `Config` адаптера в его пакете |
-| сборка конфига дублирует поля адаптера | одно поле в двух местах рассинхронизируется | вложить `postgres.Config` в `Config` приложения |
+| сборка конфига дублирует поля адаптера или платформы | одно поле в двух местах рассинхронизируется | вложить `postgres.Config` или `logger.Config` в `Config` приложения |
 
 ## Что не является нарушением
 
@@ -475,8 +477,8 @@ metadata:
 - Тесты в `tests/` и `_test.go` могут импортировать что угодно: интеграционный
   тест вправе поднять адаптер напрямую.
 - `platform` импортирует сторонние библиотеки — это её смысл.
-- `config` импортирует `Config` адаптеров: это сборка конфига, а не сам
-  адаптер.
+- `config` импортирует `Config` адаптеров и платформы (например,
+  `logger.Config`): это сборка конфига, а не реализация.
 - `infra` импортирует `repository` ради проверки контракта
   (`var _ repository.X = ...`).
 
@@ -508,7 +510,7 @@ go list -f '{{.ImportPath}}: {{join .Imports " "}}' ./... | grep 'internal/infra
 8. Оркестрация — в `services/<appname>/<service>`, без `infra`/`transport`?
 9. `Validate()` вызывается в `New`, а не в `Load()` или DI?
 10. Не тянет ли `platform` пакеты проекта и не дублирует ли `config` поля
-    адаптеров?
+    адаптеров и платформы?
 
 ## Границы
 

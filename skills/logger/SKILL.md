@@ -99,7 +99,9 @@ func New(cfg Config) *slog.Logger {
 ## Настройки в конфиге
 
 `internal/config` вкладывает `logger.Config`, как локальный конфиг адаптера:
-поля живут в пакете логгера, общий `Config` их не дублирует.
+поля живут в пакете логгера, общий `Config` их не дублирует. Это
+разрешённый импорт `config → platform/logger`, но только ради `Config`:
+сам `platform/logger` не импортирует `config` и не читает env.
 
 ```go
 // internal/config/config.go
