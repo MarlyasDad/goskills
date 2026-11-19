@@ -610,6 +610,7 @@ make build-all
 - первая операция → `internal/services/<appname>/<service>/`;
 - первый порт и адаптер → `internal/repository/`, `internal/infra/<adapter>/`;
 - первый входящий адаптер → `internal/transport/<appname>/`;
+- новая ручка, адаптер или конфиг → проверь `skills/security`;
 - первый интеграционный тест → `tests/integration/` по
   `skills/integration-testing`;
 - e2e — по `skills/e2e-testing`;

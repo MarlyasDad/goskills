@@ -34,6 +34,7 @@
 | Конфиг | `config` |
 | Тесты | `testing`, `integration-testing`, `e2e-testing` |
 | Наблюдаемость | `logger` |
+| Безопасность | `security` |
 | Файлы проекта | `makefile`, `gitignore`, `agentignore`, `dockerignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator`, `skill-issue` |
 | Промпты | `prompt-engineering` |

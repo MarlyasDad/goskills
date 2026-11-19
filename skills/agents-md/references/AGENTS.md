@@ -72,6 +72,7 @@
 - интеграционные — `skills/integration-testing`
 - e2e — `skills/e2e-testing`
 - логгер — `skills/logger`
+- безопасность — `skills/security`
 - `Makefile` — `skills/makefile`
 - `.gitignore` — `skills/gitignore`
 - `.agentignore` — `skills/agentignore`

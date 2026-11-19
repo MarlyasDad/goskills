@@ -54,6 +54,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `integration-testing` | интеграционные тесты с реальной инфраструктурой, по согласованию |
 | `e2e-testing` | e2e-сценарии; владелец — тестировщик |
 | `logger` | логгер на slog, уровни, форматы, общие атрибуты |
+| `security` | секреты, authn/authz, вход, файлы, SSRF, криптография |
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |
 | `gitignore` | что не коммитить |
 | `agentignore` | что агент не читает; OpenCode — `permissions` |
