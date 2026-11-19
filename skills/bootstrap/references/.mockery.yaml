@@ -1,4 +1,5 @@
 all: true
+recursive: true
 dir: '{{.InterfaceDir}}'
 filename: '{{.InterfaceName}}_mock.go'
 structname: '{{.InterfaceName}}Mock'
@@ -7,7 +8,6 @@ template: testify
 template-data:
   unroll-variadic: true
 packages:
-  # Перечислить пакеты, где объявлены интерфейсы для моков.
-  # Ключ — import path из go.mod, не путь на диске.
-  <module>/internal/transport/<appname>:
-  <module>/internal/services/<appname>/<service>:
+  # На каркасе интерфейсов ещё нет; рекурсивный обход internal не падает.
+  # Когда моки нужны не везде — заменить на конкретные import path.
+  <module>/internal:

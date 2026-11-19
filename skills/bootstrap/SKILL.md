@@ -399,8 +399,10 @@ func (a *App) stop(ctx context.Context) error {
 ### .mockery.yaml
 
 Создаётся по `references/.mockery.yaml`: mockery v3, шаблон `testify`, моки
-рядом с интерфейсами. Заменить `<module>` и список пакетов; версия фиксируется
-в `Makefile` (`MOCKERY_VERSION`). Генерация — `make mocks`.
+рядом с интерфейсами. По умолчанию рекурсивно обходит `<module>/internal` и
+запускается даже на пустом каркасе. Заменить `<module>`; когда моки нужны не
+везде — сузить `packages` до конкретных import path. Версия фиксируется в
+`Makefile` (`MOCKERY_VERSION`). Генерация — `make mocks`.
 
 ### .gitignore
 
