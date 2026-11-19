@@ -89,11 +89,13 @@ metadata:
     │       └── app.go
     ├── config/
     │   ├── env.go
+    │   ├── file.go
     │   ├── config.go
     │   └── config_test.go
     └── platform/
         └── logger/
-            └── logger.go
+            ├── logger.go
+            └── logger_test.go
 ```
 
 Это обязательный минимум. Остальные каталоги из `project-structure`
