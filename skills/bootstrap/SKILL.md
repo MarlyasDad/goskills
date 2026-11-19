@@ -129,8 +129,9 @@ metadata:
    `internal/config/config.go` — одно зеркало конфиг-файла: `Config` и
    `Load()`; локальные конфиги адаптеров и платформы вкладываются, а не
    дублируются.
-   `config_test.go` — дефолты и ошибка на неверном значении. Локальный файл
-   (`file.go`, флаг `-config`) добавляется, когда нужен запуск вне k8s.
+   `config_test.go` — дефолты и ошибка на неверном значении.
+   `internal/config/file.go` — по `skills/config/references/file.go`:
+   локальный env-файл по `-config`, пустой путь ничего не делает.
    По умолчанию — `go get github.com/stretchr/testify`, тест конфига
    пишется на `require`. `stdlib` без testify — только по явному запросу.
    Правила источников, композиции и валидации — `skills/config`.
@@ -138,8 +139,9 @@ metadata:
    адаптеры, сервисы и транспорт из `Config`, запускает и останавливает.
    Пока зависимостей нет — минимальный `App`, `New(cfg, log)` и `Run(ctx)`.
    Импорт `infra`, `transport`, `config`, `platform` — только в `app.go`.
-7. **Точка входа.** `cmd/<appname>/main.go`: конфиг → логгер → `app.New` →
-   сигналы ОС → `Run` и graceful shutdown. Адаптеры здесь не создаются.
+7. **Точка входа.** `cmd/<appname>/main.go`: скопировать
+   `references/main.go` и заменить `<module>`/`<appname>`. Конфиг → логгер →
+   `app.New` → сигналы ОС → `Run` и останов. Адаптеры здесь не создаются.
 8. **Команды.** `Makefile` по `skills/makefile`: `build-<app>`, `run-<app>`,
    `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`. `mockery`
    ставится через `.bin-deps`; `.mockery.yaml` — в корне.
@@ -294,72 +296,93 @@ package <appname>
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	"<module>/internal/config"
 )
 
 // App — DI приложения: адаптеры, сервисы, запуск и останов.
 type App struct {
-	log *slog.Logger
+	log             *slog.Logger
+	shutdownTimeout time.Duration
+	wg              sync.WaitGroup
 }
 
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
-	return &App{log: log}, nil
+	return &App{
+		log:             log,
+		shutdownTimeout: cfg.ShutdownTimeout,
+	}, nil
 }
 
-// Run работает до отмены контекста. Адаптеры создаются в New.
+// Run работает до отмены контекста и завершает компоненты с таймаутом.
 func (a *App) Run(ctx context.Context) error {
+	// здесь запускаются компоненты и добавляются в a.wg
+
 	<-ctx.Done()
-	return nil
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.shutdownTimeout)
+	defer cancel()
+
+	return a.stop(shutdownCtx)
+}
+
+// stop останавливает компоненты и ждёт их горутины, но не дольше shutdownCtx.
+func (a *App) stop(ctx context.Context) error {
+	// если компоненту нужен явный Stop, вызови его здесь до ожидания
+	done := make(chan struct{})
+	go func() {
+		a.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("stop: %w", ctx.Err())
+	}
 }
 ```
+
+`Run` — точка graceful shutdown: после `<-ctx.Done()` он останавливает
+компоненты с таймаутом и ждёт их горутины. `WaitGroup` принадлежит `App`
+или компоненту, а не `main`: `main` вызывает `Run(ctx)` и не делает
+`wg.Wait()`.
+
+Порядок зависит от компонента: если он выходит по `ctx`, достаточно
+дождаться; если его будит `Stop`, вызови `Stop` до `wg.Wait`.
 
 ### cmd/<appname>/main.go
 
-```go
-package main
+Готовый файл — `references/main.go`. Скопировать в `cmd/<appname>/main.go` и
+заменить `<module>` и `<appname>`.
 
-import (
-	"context"
-	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
+Структура:
 
-	"<module>/internal/app/<appname>"
-	appconfig "<module>/internal/config"
-	"<module>/internal/platform/logger"
-)
+1. `main` — разбирает `-config` (пустой по умолчанию), вызывает `run(path)`
+   и логирует ошибку один раз.
+2. `run(path string) error` — загружает файл и env, создаёт логгер, собирает
+   приложение и запускает `Run`.
+3. `signal.NotifyContext` даёт контекст для `app.Run`; отдельный обработчик
+   сигналов и `WaitGroup` в `main` не нужны.
+4. Ошибки возвращаются с контекстом (`load config: %w`), логируются один раз
+   в `main`.
 
-func main() {
-	cfg, err := appconfig.Load()
-	if err != nil {
-		slog.Error("load config", "error", err)
-		os.Exit(1)
-	}
+Логи: сообщение стабильное и строчное, данные — в атрибутах. Ошибку
+логирует один раз `main`: `slog.Error("service failed", "error", err)`.
+Имя сервиса уже в `logger.Config`, поэтому префикс вида `RD-Hub:` и
+`fmt.Sprintf` в сообщении не нужны.
 
-	log := logger.New(cfg.Logger)
-	slog.SetDefault(log)
+Базовый вариант — `Run(ctx)`: приложение само ждёт отмены контекста и
+завершает работу. Отдельные `Start`/`Stop` добавляй только если они
+действительно нужны: иначе сигналы и остановка расползаются по `main`.
 
-	a, err := app.New(cfg, log)
-	if err != nil {
-		log.Error("new app", "error", err)
-		os.Exit(1)
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(),
-		os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	if err := a.Run(ctx); err != nil {
-		log.Error("run app", "error", err)
-		os.Exit(1)
-	}
-
-	log.Info("stopped", "timeout", cfg.ShutdownTimeout)
-}
-```
+`-config` по умолчанию пустой: в k8s файла нет. Локально `make run-<app>`
+передаёт `configs/.env.local`.
 
 ### Makefile
 
@@ -438,8 +461,10 @@ make build-all
 - `go test` проходит; тест не ходит в сеть и не использует `time.Sleep`.
 - `internal/platform` не импортирует пакеты проекта.
 - `internal/config` — один пакет на модуль, без подкаталогов по приложениям.
-- `cmd/<appname>` содержит только конфиг, логгер, `app.New`, сигналы и
-  запуск/останов; адаптеров там нет.
+- `cmd/<appname>` содержит только конфиг, логгер, `app.New`, сигналы,
+  запуск и останов; адаптеров там нет.
+- `cmd/<appname>/main.go` собран по `references/main.go`: без `MustLoad`,
+  `panic` и отдельного обработчика сигналов.
 - `.gitignore`, `.agentignore` и `Makefile` лежат в корне проекта.
 - `internal/domain` и другие слои отсутствуют, пока в них нет файлов.
 - В `.git/config` записаны имя и email разработчика, глобальный конфиг не

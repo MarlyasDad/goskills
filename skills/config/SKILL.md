@@ -44,8 +44,18 @@ Config**» и «**где валидировать**». Вопрос «где л�
   пришло значение.
 - В k8s не подкладывается env-файл: секции с секретами и env-переменные
   одновременно не смешиваются.
-- Формат файла выбирает проект (env, JSON, YAML). Требование одно: после
-  загрузки имена переменных совпадают с k8s.
+- Формат один — env: `KEY=VALUE`, комментарии `#`, пустые строки.
+  JSON/YAML не нужны: в k8s всё равно env, а локальный файл повторяет те же
+  имена переменных.
+
+## Библиотеки
+
+- Только стандартная библиотека. Для env-файла хватает `os`, `bufio` и
+  `strings`; внешние `godotenv`, `envconfig` и `caarlos0/env` не нужны.
+- `flag.Parse` — в `cmd/<appname>`, не в `internal/config`: загрузчик
+  принимает путь аргументом.
+- `MustLoad`/`panic` — только для ошибок программиста. Ошибки файла и env
+  возвращай через `Load() (*Config, error)`.
 
 ## Слои конфигурации
 
@@ -191,17 +201,24 @@ func (a *App) Run(ctx context.Context) error {
 }
 ```
 
+Полный файл — `skills/bootstrap/references/main.go`; ниже — только порядок
+вызовов.
+
 `cmd/<appname>/main.go` не создаёт адаптеры. Он делает только:
 
 1. разбирает `-config` и вызывает `config.LoadFile` / `config.Load`;
 2. создаёт логгер;
 3. вызывает `app.New(cfg, log)`;
-4. ловит сигналы ОС и вызывает `Run`/останов.
+4. ловит сигналы ОС и запускает/останавливает приложение.
 
 ```go
 // cmd/creator/main.go
 cfg, err := config.Load()
-log := logger.New(cfg.Env)
+if err != nil {
+	return fmt.Errorf("load config: %w", err)
+}
+
+log := logger.New(cfg.Logger)
 
 a, err := app.New(cfg, log)
 if err != nil {
@@ -230,9 +247,15 @@ if err := config.LoadFile(configPath); err != nil {
 	return fmt.Errorf("load config file: %w", err)
 }
 cfg, err := config.Load()
+if err != nil {
+	return fmt.Errorf("load config: %w", err)
+}
 ```
 
-- `configPath == ""` — только env, как в k8s;
+- `configPath == ""` — только env, как в k8s; дефолт флага `-config` должен
+  быть пустым, иначе в k8s приложение упадёт из-за отсутствующего файла;
+- `parseFile` читает env-файл (`KEY=VALUE`, `#`-комментарии, пустые строки);
+  если файла нет или он битый, `LoadFile` возвращает ошибку, а не молчит;
 - `LoadFile` выставляет все переменные из файла через `os.Setenv`;
 - существующие env перетираются — это ожидаемо;
 - `Load()` читает уже готовое окружение;
@@ -257,6 +280,8 @@ func LoadFile(path string) error {
 	return nil
 }
 ```
+
+Готовый файл — `references/file.go`; скопировать в `internal/config/file.go`.
 
 ## Имена переменных
 
@@ -357,6 +382,9 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 - Смешивать в k8s env-файл и env-переменные.
 - Проверять «была ли переменная задана раньше» при загрузке файла.
 - Загружать конфиг в `init()` или глобальную переменную.
+- Паниковать из `MustLoad` на отсутствующем файле или неверной env: это
+  ожидаемая ошибка, а не ошибка программиста.
+- Вызывать `flag.Parse` внутри `internal/config`.
 - Коммитить реальный конфиг, печатать секреты в лог.
 - Добавлять пакет с настройками, не обновив `configs/.env.example` и
   `internal/config`.
@@ -367,4 +395,4 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 - «Где лежит файл» — `skills/project-structure`.
 - «Что можно импортировать» — `skills/architecture`.
 - «Как тестировать» — `skills/testing`.
-- «С чего начать проект» — `skills/bootstrap`.
+- «С чего начать проект и полный `main.go`» — `skills/bootstrap`.

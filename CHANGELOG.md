@@ -1,4 +1,11 @@
 ## 2026-11-19
+- config: только stdlib и один env-файл — `KEY=VALUE`; `godotenv`/`envconfig` не нужны, JSON/YAML убраны; `parseFile` возвращает ошибку отсутствующего или битого файла (Alexander Yudaev <yudaev.alex@gmail.com>)
+- bootstrap: `App.Run` описан как точка graceful shutdown — таймаут, `Stop`, ожидание `WaitGroup`; `main` не держит wg (Alexander Yudaev <yudaev.alex@gmail.com>)
+- bootstrap: `main.go` вынесен в `references/main.go` — `main` → `run(path)`, пустой `-config`, `signal.NotifyContext`, стабильные логи без `MustLoad`/`panic` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- logger: фрагмент подключения в main сокращён до создания логгера; полный `main.go` — в bootstrap (Alexander Yudaev <yudaev.alex@gmail.com>)
+- wording: смешанное «`Run`/останов» заменено на «запуск и останов» в architecture, config, bootstrap и AGENTS.md (Alexander Yudaev <yudaev.alex@gmail.com>)
+- main: закреплено, что полный `main.go` — в bootstrap; config, logger, architecture и project-structure ссылаются на него, а не дублируют (Alexander Yudaev <yudaev.alex@gmail.com>)
+- config: исправлен пример main — `logger.New(cfg.Logger)` и проверка ошибки `config.Load`; то же в локальном запуске (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: явно разделены навыки goskills и проектные; для проектных не нужны таблицы и CHANGELOG goskills (Alexander Yudaev <yudaev.alex@gmail.com>)
 - process: при добавлении навыка обязали синхронизировать таблицы README/AGENTS.md и шаблон agents-md; причина — пропущенные logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: в шаблон `references/AGENTS.md` добавлены ссылки на logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)

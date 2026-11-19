@@ -161,16 +161,13 @@ LOG_OUTPUT=stdout
 
 ## Подключение в main
 
+Полный файл — `skills/bootstrap/references/main.go`; ниже — только
+логгерная часть.
+
 ```go
-// cmd/<appname>/main.go
+// cmd/<appname>/main.go, внутри run()
 log := logger.New(cfg.Logger)
 slog.SetDefault(log)
-
-a, err := app.New(cfg, log)
-if err != nil {
-	log.Error("new app", "error", err)
-	os.Exit(1)
-}
 ```
 
 - `slog.SetDefault` нужен только для сторонних библиотек, которые пишут
@@ -326,5 +323,6 @@ go test ./...
 - «В каком каталоге лежит пакет» — `skills/project-structure`.
 - «Что можно импортировать» — `skills/architecture`.
 - «Как тестировать» — `skills/testing`.
+- «Полный `main.go` и порядок запуска» — `skills/bootstrap`.
 - «Что не коммитить и что не читает агент» — `skills/gitignore`,
   `skills/agentignore`.
