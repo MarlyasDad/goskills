@@ -1,4 +1,5 @@
 ## 2026-11-19
+- architecture: добавлены outbox, inbox, fan-in/fan-out, DLQ, CDC и backpressure — надёжная доставка, идемпотентность и цена блокировок (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-creator: проверка frontmatter переведена с Ruby на Go (`references/check_frontmatter.go`); закреплено правило — примеры только на Go и в едином стиле репозитория (AGENTS.md, skill-creator) (Alexander Yudaev <yudaev.alex@gmail.com>)
 - architecture: краткая формулировка и таблица подходов переписаны проще — DDD про сам домен, слоистость про цену изменений, Clean без «политики и механизмов» (Alexander Yudaev <yudaev.alex@gmail.com>)
 - logger: переменные SERVICE_* описаны таблицей, SERVICE_ENVIRONMENT больше не наследует APP_ENV; пример .env.example приведён к SERVICE_VERSION и SERVICE_ENVIRONMENT (Alexander Yudaev <yudaev.alex@gmail.com>)
