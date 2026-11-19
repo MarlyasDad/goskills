@@ -29,7 +29,8 @@
 | Каркас и архитектура | `bootstrap`, `project-structure`, `architecture` |
 | Принципы | `zen` |
 | Прикладной слой | `services` |
-| Транспорт | `transport` |
+| Транспорт | `transport`, `http-server`, `http-controllers`, `http-middlewares` |
+| Сборка приложения | `composition-root` |
 | Конфиг | `config` |
 | Тесты | `testing`, `integration-testing`, `e2e-testing` |
 | Наблюдаемость | `logger` |

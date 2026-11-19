@@ -25,7 +25,7 @@ metadata:
 - Если модуль импортируется другими проектами — только полный путь:
   `github.com/org/repo`. Короткое имя снаружи не соберётся.
 - Если модуль не импортируется никем — допустимо короткое имя:
-  `vp-appeal-doc-creator` или `creator`. Это осознанное исключение, а не
+  `billing-service` или `creator`. Это осознанное исключение, а не
   дефолт. Причина фиксируется в `AGENTS.md` или `README.md`: например,
   «модуль не переиспользуется, короткое имя выбрано осознанно».
 - Git remote при коротком имени остаётся: коротким становится только путь
@@ -35,7 +35,7 @@ metadata:
 
 Последствия короткого имени:
 
-- первый элемент без точки (`creator`, `vp-appeal-doc-creator`) Go трактует
+- первый элемент без точки (`creator`, `billing-service`) Go трактует
   как локальный или стандартный путь: `go get` такого модуля снаружи не
   работает;
 - при переиспользовании в `go.mod` потребителя нужен `replace`;
@@ -46,7 +46,7 @@ metadata:
 `<appname>` — имя бинаря, а не имя проекта.
 
 - Выбирается по бинарю: короткое, одно слово — `creator`, `api`, `worker`.
-- Без доменного префикса и без имени репозитория: `vp-appeal-doc-creator`
+- Без доменного префикса и без имени репозитория: `billing-service`
   как `appname` не годится.
 - Имя проекта в `appname` не обязано попадать.
 - Одинаков в `cmd/<appname>/`, `internal/app/<appname>/`,
@@ -58,7 +58,7 @@ metadata:
 
 | Репозиторий | module | appname | бинарь |
 |---|---|---|---|
-| `vp-appeal-doc-creator` | `vp-appeal-doc-creator` — не импортируется | `creator` | `bin/creator` |
+| `billing-service` | `billing-service` — не импортируется | `billing` | `bin/billing` |
 | `github.com/org/orders-api` | `github.com/org/orders-api` — импортируется | `api` | `bin/api` |
 
 ## Инициализация проекта
@@ -181,6 +181,12 @@ go mod init <module>
 │   └── transport/
 │       └── appname/
 │           ├── http/
+│           │   ├── config.go
+│           │   ├── server.go
+│           │   ├── router.go
+│           │   ├── middleware/
+│           │   └── <group>/
+│           │       └── <resource>/
 │           ├── grpc/
 │           ├── kafka/
 │           └── websocket/
@@ -244,8 +250,11 @@ go mod init <module>
 
 ### internal/app/<appname>/
 
-- Только `app.go` — composition root приложения: создаёт адаптеры, сервисы и
-  транспорт из `Config`, связывает их, запускает и останавливает.
+- `app.go` — composition root приложения: создаёт адаптеры, сервисы и
+  транспорт из `Config`, связывает их, запускает и останавливает. Правила —
+  `skills/composition-root`.
+- При росте допустимы соседние файлы того же пакета по жизненному циклу
+  (`http.go`, `consumers.go`). Отдельных пакетов и деления по слоям нет.
 - Импортирует `domain`, `services`, `repository`, `infra`, `transport`,
   `config`, `platform`.
 - Бизнес-логики и сценариев здесь нет: они в `domain` и
@@ -268,14 +277,20 @@ go mod init <module>
 ### internal/transport/<appname>/
 
 - Входящие адаптеры — то, что вызывает внешний мир.
-- `http/` — роутинг, хендлеры, маппинг DTO ↔ домен; `grpc/` — gRPC-серверы;
-  `kafka/` — consumer; `websocket/` — соединения.
+- `http/` — HTTP-сервер, роутинг, middleware и контроллеры; `grpc/` —
+  gRPC-серверы; `kafka/` — consumer; `websocket/` — соединения.
 - Подкаталог по приложению: у разных приложений не пересекаются роуты,
-  консьюмеры и порты.
+  консьюмеры и порты. Общего `internal/transport/http/` в обход `<appname>`
+  нет.
+- В `http/` лежат `config.go` (локальный `Config` сервера), `server.go`
+  (сборка `*http.Server` без запуска), `router.go` (корневой router),
+  `middleware/` и каталоги контроллеров `<group>/<resource>/`.
 - Слой тонкий: разобрать запрос → вызвать операцию сервиса → собрать ответ.
 - Не импортирует `app`: операция вызывается через интерфейс, объявленный
   здесь; реализация — в `services/<appname>/<service>`, связывает `app.go`.
-- Структура, DTO, коды и маппинг ошибок — `skills/transport`.
+- Структура, DTO, коды и маппинг ошибок — `skills/transport`; HTTP-сервер —
+  `skills/http-server`, контроллеры — `skills/http-controllers`, middleware —
+  `skills/http-middlewares`, сборка — `skills/composition-root`.
 
 ### internal/platform/
 
@@ -357,11 +372,14 @@ go mod init <module>
 | Интерфейс репозитория | `internal/repository/<entity>.go` |
 | Реализация репозитория (БД, кэш) | `internal/infra/<store>/` |
 | Локальный конфиг адаптера | `internal/infra/<adapter>/config.go` |
+| Локальный конфиг HTTP-сервера | `internal/transport/<appname>/http/config.go` |
 | Сборка конфига модуля | `internal/config/config.go` |
 | Клиент внешнего HTTP/gRPC API | `internal/infra/http/`, `internal/infra/grpc/` |
 | Producer в Kafka | `internal/infra/kafka/` |
 | Consumer Kafka | `internal/transport/<appname>/kafka/` |
-| HTTP-хендлер | `internal/transport/<appname>/http/` |
+| HTTP-сервер, router, HTTP Config | `internal/transport/<appname>/http/` |
+| HTTP-middleware | `internal/transport/<appname>/http/middleware/` |
+| HTTP-контроллер | `internal/transport/<appname>/http/<group>/<resource>/` |
 | gRPC-сервер | `internal/transport/<appname>/grpc/` |
 | WebSocket | `internal/transport/<appname>/websocket/` |
 | Новая env-переменная | `internal/config/config.go` + `configs/.env.example` |
@@ -396,6 +414,11 @@ go mod init <module>
 - SQL, HTTP-коды и JSON-теги транспорта в `internal/domain/`.
 - Входящие хендлеры в `internal/infra/` и исходящие клиенты в
   `internal/transport/` — это разные направления.
+- `internal/transport/http/` в обход `<appname>`: HTTP-сервер и роуты
+  принадлежат приложению.
+- Создание сервисов, репозиториев и адаптеров в `router.go` — это `app.go`.
+- HTTP-сервер, который стартует из конструктора или `router.go`, — запуск
+  и останов только в `app.go`.
 - Все тесты подряд в `tests/` — там только интеграционные и e2e.
 - `bin/` в git.
 

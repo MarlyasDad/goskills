@@ -1,4 +1,13 @@
 ## 2026-11-19
+- http-server: таймауты сделаны необязательными — `0` заменяется дефолтом в `NewServer`, отрицательные значения отклоняются `Validate`; дефолты не дублируются в `config.Load` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-server: добавлен навык — Config, server.go, корневой router, health/metrics/docs, таймауты и `net.JoinHostPort`; сервер привязан к `<appname>` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-controllers: добавлен навык — handler.go/ports.go/request.go/response.go, тонкий обработчик, DTO, коды и маппинг ошибок, тесты на httptest (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-middlewares: добавлен навык — Chain, порядок, RequestID/Logging/Recovery/CORS/Auth/RateLimit, `Unwrap` у ResponseWriter (Alexander Yudaev <yudaev.alex@gmail.com>)
+- composition-root: добавлен навык — порядок сборки в app.go, запуск, `Shutdown`/`Close`, cleanup и несколько компонентов (Alexander Yudaev <yudaev.alex@gmail.com>)
+- transport/project-structure/config/bootstrap/architecture: HTTP-часть вынесена в отдельные навыки; layout транспорта уточнён до `internal/transport/<appname>/http/` (Alexander Yudaev <yudaev.alex@gmail.com>)
+- README/AGENTS/agents-md: каталог навыков дополнен HTTP-сервером, контроллерами, middleware и composition root (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-server/http-controllers/http-middlewares/composition-root: добавлены эталонные файлы в `references/` — Config, server/router, handler/DTO/respond, middleware и app.go с тестами (Alexander Yudaev <yudaev.alex@gmail.com>)
+- project-structure/bootstrap: пример имени проекта обезличен — `billing-service`/`billing` вместо названия конкретного сервиса (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap/config/logger: убрано мёртвое поле `Env`/`APP_ENV` из эталонов; в каркас не добавляется без ветвления, `SERVICE_ENVIRONMENT` остаётся отдельным атрибутом лога (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: комментарий про версии заменён на ссылку на переменные выше (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: goose и sqlc зафиксированы переменными `GOOSE_VERSION` и `SQLC_VERSION`; `@latest` в эталоне больше нет (Alexander Yudaev <yudaev.alex@gmail.com>)

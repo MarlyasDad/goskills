@@ -62,6 +62,10 @@
 - раскладка — `skills/project-structure`
 - зависимости — `skills/architecture`
 - конфиг — `skills/config`
+- HTTP-сервер — `skills/http-server`
+- HTTP-контроллеры — `skills/http-controllers`
+- HTTP-middleware — `skills/http-middlewares`
+- сборка приложения — `skills/composition-root`
 - unit-тесты — `skills/testing`
 - интеграционные — `skills/integration-testing`
 - e2e — `skills/e2e-testing`

@@ -44,7 +44,11 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `architecture` | зависимости и границы слоёв |
 | `zen` | The Zen of Python на Go: явное, простое, читаемое |
 | `services` | каталог на сервис, use cases, DTO, оркестрация и саги |
-| `transport` | HTTP/gRPC/Kafka/WebSocket, тонкие контроллеры и маппинг ошибок |
+| `transport` | общие правила входящих адаптеров: HTTP, gRPC, Kafka, WebSocket |
+| `http-server` | HTTP-сервер: Config, server.go, router, health/metrics/docs |
+| `http-controllers` | HTTP-обработчики: handler.go, ports.go, DTO, коды ошибок |
+| `http-middlewares` | Chain, порядок, RequestID/Logging/Recovery/CORS/Auth/RateLimit |
+| `composition-root` | сборка app.go, запуск и останов компонентов |
 | `config` | источники, композиция и валидация конфига |
 | `testing` | unit-тесты: table-driven, testify/mockery, фейки |
 | `integration-testing` | интеграционные тесты с реальной инфраструктурой, по согласованию |

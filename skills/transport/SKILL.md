@@ -1,6 +1,6 @@
 ---
 name: transport
-description: "Правила входящих адаптеров: HTTP, gRPC, Kafka и WebSocket, тонкие контроллеры, DTO, маппинг ошибок и интерфейсы операций. Заготовка навыка; используется при добавлении обработчика. Импорты — skills/architecture, сервисы — skills/services."
+description: "Правила входящих адаптеров: HTTP, gRPC, Kafka и WebSocket, тонкие контроллеры, DTO, маппинг ошибок и интерфейсы операций. HTTP-часть — skills/http-server, http-controllers, http-middlewares; сборка — skills/composition-root. Используется при добавлении обработчика. Импорты — skills/architecture, сервисы — skills/services."
 license: MIT
 compatibility: opencode
 metadata:
@@ -14,8 +14,10 @@ metadata:
 HTTP-контроллеры — это часть транспорта, отдельный навык `controllers` не
 нужен.
 
-> Статус: заготовка. Ниже — базовые правила и структура. TODO: middleware и
-> auth, OpenAPI, пагинация, idempotency keys, rate limiting, трейсинг запросов.
+> Статус: HTTP-часть вынесена в `skills/http-server`,
+> `skills/http-controllers` и `skills/http-middlewares`. Для gRPC, Kafka и
+> WebSocket — базовые правила. TODO: OpenAPI, пагинация, idempotency keys,
+> трейсинг запросов.
 
 ## Границы
 
@@ -29,10 +31,11 @@ HTTP-контроллеры — это часть транспорта, отде
 ```schema
 internal/transport/<appname>/
 ├── http/
-│   ├── handler.go
+│   ├── config.go
+│   ├── server.go
 │   ├── router.go
-│   ├── middleware.go
-│   └── dto.go
+│   ├── middleware/
+│   └── <group>/<resource>/
 ├── grpc/
 ├── kafka/
 └── websocket/
@@ -128,11 +131,24 @@ func (s *Service) Register(
 
 ## HTTP
 
-- `router.go` — маршруты, `handler.go` — обработчик, `dto.go` — контракты.
-- Коды: 200/201/204, 400, 401/403, 404, 409, 422, 500.
-- `Content-Type`, body limits, таймауты.
-- Middleware: request ID, логирование, recover, auth — TODO.
+HTTP-часть разложена по отдельным навыкам:
+
+- `skills/http-server` — `Config`, `server.go`, корневой router,
+  health/readiness, metrics/docs, запуск и останов.
+- `skills/http-controllers` — `handler.go`, `ports.go`, `request.go`,
+  `response.go`, DTO, коды и маппинг ошибок.
+- `skills/http-middlewares` — `Chain`, порядок, RequestID, Logging,
+  Recovery, CORS, Auth, RateLimit.
+- `skills/composition-root` — сборка сервера, сервисов и адаптеров в
+  `app.go`, graceful shutdown.
+
+Общие правила выше — интерфейс операции, DTO и ошибки — действуют и для
+HTTP. Ниже перечислены только то, что не зависит от протокола:
+
+- Коды: 200/201/204, 400, 401/403, 404, 409, 422, 429, 500, 503/504.
+- `Content-Type`, лимит тела, таймауты — на транспорте.
 - Health/readiness — отдельные роуты, без бизнес-логики.
+- Auth и rate limit — middleware, а не код в каждом обработчике.
 
 ## gRPC
 
@@ -158,6 +174,8 @@ func (s *Service) Register(
 - `httptest` для HTTP, `bufconn` для gRPC.
 - Фейки интерфейса операции, без реальной БД и сети.
 - Проверяются: разбор запроса, коды, маппинг ошибок, граничные случаи.
+- HTTP-контроллеры — `skills/http-controllers`, middleware —
+  `skills/http-middlewares`.
 - Реальный брокер и полный стек — `skills/integration-testing`.
 - Подробно — в `skills/testing`.
 
@@ -169,6 +187,9 @@ func (s *Service) Register(
 - Маппинг ошибок по строке.
 - Один огромный handler на все роуты.
 - Роуты и DTO разных приложений в одном пакете.
+- Создание сервисов, репозиториев и адаптеров в `router.go`.
+- Auth-middleware, импортирующий `infra` или конкретного провайдера
+  identity.
 
 ## Чек-лист
 

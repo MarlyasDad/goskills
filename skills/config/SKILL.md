@@ -64,6 +64,7 @@ Config**» и «**где валидировать**». Вопрос «где л�
 | `configs/` | `.env.example`, локальные `.env.*` | кода |
 | `internal/config/` | `Config`, `Load()`, `LoadFile()` | клиентов, бизнес-логики |
 | `internal/infra/<adapter>/config.go` | локальный `Config`, `Validate()` | чтения env, импорта `config` |
+| `internal/transport/<appname>/http/config.go` | локальный `Config` HTTP-сервера, `Validate()` | чтения env, импорта `config` |
 | `internal/platform/<pkg>/` | локальный `Config` (например, `logger.Config`) | чтения env, импорта `config` |
 | `internal/app/<appname>/app.go` | DI: адаптеры и сервисы из `Config` | дублирования полей |
 | `cmd/<appname>/` | флаг `-config`, `Load()`, логгер, `app.New`, сигналы | создания адаптеров |
@@ -176,7 +177,8 @@ func New(cfg Config) (*Pool, error) {
 ## DI приложения
 
 `internal/app/<appname>/app.go` — composition root приложения: создаёт
-адаптеры и сервисы, запускает и останавливает приложение.
+адаптеры и сервисы, запускает и останавливает приложение. Порядок сборки и
+lifecycle — `skills/composition-root`; здесь только конфиг.
 
 ```go
 // internal/app/creator/app.go
@@ -304,6 +306,8 @@ func LoadFile(path string) error {
 1. `configs/.env.example` — переменные с комментариями и дефолтами.
    Это единственный шаблон для всех приложений.
 2. `internal/infra/<adapter>/config.go` — локальный `Config` и `Validate()`.
+   Для HTTP-сервера — `internal/transport/<appname>/http/config.go`;
+   правила — `skills/http-server`.
 3. `internal/config/config.go` — поле в общем `Config` и разбор в `Load()`.
 4. `internal/app/<appname>/app.go` — создать адаптер с локальным конфигом:
    `postgres.New(cfg.Postgres)`. Валидация уже внутри `New`.
@@ -396,3 +400,4 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 - «Что можно импортировать» — `skills/architecture`.
 - «Как тестировать» — `skills/testing`.
 - «С чего начать проект и полный `main.go`» — `skills/bootstrap`.
+- «Порядок сборки приложения и lifecycle» — `skills/composition-root`.
