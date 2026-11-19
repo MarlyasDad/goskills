@@ -496,6 +496,40 @@ go mod init <module>
 После вставки действует тот же чек-лист: grep по старому префиксу модуля
 даёт пустой вывод, `go build ./...` проходит.
 
+## Проект создан без навыков
+
+Относится к существующему Go-проекту, который уже собирается, но вырос без
+goskills. `bootstrap` его не пересоздаёт: приводим к каркасу по шагам, не
+ломая сборку.
+
+1. **Модуль и приложение.** Проверить `module` в `go.mod`; выбрать
+   `<appname>`, если его нет. `module` — только префикс импортов, в именах
+   каталогов он не используется. `<appname>` — короткое имя бинаря, не
+   репозиторий и не модуль: для `module github.com/longusername/longreponame`
+   каталоги будут `cmd/api/`, `internal/app/api/`. Один `<appname>` в
+   `cmd/<appname>/`, `internal/app/<appname>/`,
+   `internal/services/<appname>/`, `internal/transport/<appname>/`.
+2. **Конфиг.** Завести `configs/.env.example`; локальный
+   `configs/.env.local` — в `.gitignore`. Один `internal/config` на модуль:
+   `Config`, `Load()`, `LoadFile()`, вложенные `logger.Config` и локальные
+   `Config` адаптеров. Убрать чтение env из `main` и адаптеров.
+3. **Makefile.** Привести цели: `build-<app>`, `run-<app>`, `build-all`,
+   `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`.
+   `run-<app>` передаёт `-config configs/.env.local`; версия Go — только в
+   `go.mod`.
+4. **Корневые файлы.** `.gitignore`, `.agentignore`, `.dockerignore` (если
+   есть Docker), `AGENTS.md`, `.mockery.yaml`, `README.md`. Шаблоны —
+   `skills/*/references/`.
+5. **Слои и импорты.** Убрать `util/`, `common/`, `helpers/`, пустые
+   каталоги и мёртвый код. Чужие импорты заменить на `<module>/...`;
+   `main.go` оставить только bootstrap; исходящие адаптеры — в `infra`,
+   входящие — в `transport`. Границы — `skills/architecture`.
+6. **Моки.** `.mockery.yaml` и `make mocks`; `mockery` — в `.bin-deps` с
+   зафиксированной версией.
+7. **Проверка.** `go mod tidy`, `go build ./...`, `go vet ./...`,
+   `go test ./...`, `make build-all`; grep по старому префиксу модуля пуст.
+8. **AGENTS.md.** Записать оставшиеся осознанные отклонения и их причину.
+
 ## Границы
 
 - «Где лежит файл» — этот навык.

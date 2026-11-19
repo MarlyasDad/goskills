@@ -1,4 +1,6 @@
 ## 2026-11-19
+- project-structure: уточнено, что `module` — только префикс импортов, а `<appname>` — короткое имя бинаря; длинный module не удлиняет каталоги (Alexander Yudaev <yudaev.alex@gmail.com>)
+- project-structure: добавлен чек-лист приведения существующего проекта, созданного без goskills; bootstrap ссылается на него (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: эталон `.mockery.yaml` теперь рекурсивно обходит `internal` и запускается на пустом каркасе; список пакетов сужается по мере появления интерфейсов (Alexander Yudaev <yudaev.alex@gmail.com>)
 - mockery: добавлен эталон `.mockery.yaml` для v3, версия зафиксирована в `Makefile` (`MOCKERY_VERSION`), добавлена цель `mocks` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: дерево каркаса дополнено `internal/config/file.go` и `internal/platform/logger/logger_test.go` (Alexander Yudaev <yudaev.alex@gmail.com>)

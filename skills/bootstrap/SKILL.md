@@ -23,8 +23,9 @@ metadata:
 - `go.mod` отсутствует.
 - Навыки goskills уже подключены к OpenCode (см. README репозитория goskills).
 
-Если `go.mod` уже есть — каркас не пересоздаётся. Дальше работают
-`project-structure` и `architecture`.
+Если `go.mod` уже есть — каркас не пересоздаётся. Привести проект по
+`skills/project-structure`, раздел «Проект создан без навыков»; границы
+импортов — `skills/architecture`.
 
 ## Входные данные
 
