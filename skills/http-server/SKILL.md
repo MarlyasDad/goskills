@@ -341,7 +341,6 @@ func NewServer(cfg Config, log *slog.Logger, handler http.Handler) (*http.Server
 package http
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 
@@ -352,12 +351,11 @@ import (
 // ручки. Поле и импорт контроллера добавляются вместе с первым бизнес-роутом.
 type HandlerSet struct{}
 
-// Deps — зависимости router. Ready == nil означает «всегда ready».
+// Deps — зависимости router.
 type Deps struct {
 	Config   Config
 	Log      *slog.Logger
 	Auth     middleware.Authenticator
-	Ready    func(context.Context) error
 	Handlers HandlerSet
 }
 
@@ -368,7 +366,7 @@ func NewRouter(d Deps) http.Handler {
 
 	mux := http.NewServeMux()
 
-	registerSystemRoutes(mux, d.Ready)
+	registerHealthRoute(mux)
 	registerOptionalRoutes(mux, d.Config)
 	// registerDocumentRoutes(mux, d) — добавить вместе с первым контроллером.
 
@@ -381,20 +379,11 @@ func NewRouter(d Deps) http.Handler {
 	)
 }
 
-// registerSystemRoutes регистрирует health/readiness всегда. Если нужен
-// режим «строго две ручки», убери вызов или добавь отдельный флаг.
-func registerSystemRoutes(mux *http.ServeMux, ready func(context.Context) error) {
+// registerHealthRoute — единственная обязательная системная ручка.
+// Когда появится зависимость, добавь сюда проверку и отдельный роут, если
+// нужен readiness.
+func registerHealthRoute(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
-		if ready != nil {
-			if err := ready(r.Context()); err != nil {
-				http.Error(w, "not ready", http.StatusServiceUnavailable)
-				return
-			}
-		}
 		w.WriteHeader(http.StatusOK)
 	})
 }
@@ -478,23 +467,18 @@ func registerDocumentRoutes(mux *http.ServeMux, d Deps) {
   `/external/...`). Один `router.go` остаётся точкой входа, вспомогательные
   `register...` функции — в нём же.
 - Auth, rate limit и прочие требования конкретной группы вешай на группу,
-  а не на весь сервер: health, readiness и docs обычно публичные.
+  а не на весь сервер: health и docs обычно публичные.
 - `mux.Handle("/", ...)` для SPA или заглушки ставится последним и не должен
   перехватывать `/metrics`, `/docs/`, `/healthz`.
 
-## Health, metrics, docs
+## Системные ручки
 
-`/healthz` и `/readyz` регистрируются всегда. С включёнными `Metrics` и
-`Swagger` каркас отдаёт четыре системных роута: `/healthz`, `/readyz`,
-`/metrics`, `/docs/`. Если нужен режим «строго две», убери вызов
-`registerSystemRoutes` или добавь отдельный флаг; по умолчанию health и
-readiness включены.
+`/healthz` регистрируется всегда. `/metrics` и `/docs/` включаются флагами
+`Metrics` и `Swagger`; с ними каркас отдаёт три системных роута:
+`/healthz`, `/metrics`, `/docs/`.
 
-- `/healthz` — liveness: процесс жив, зависимости не проверяются.
-- `/readyz` — readiness: проверяет зависимости через переданную функцию
-  `Ready`. Проверка идёт через порт (например, `Ping` репозитория), а не
-  прямым SQL в router. `Ready == nil` означает «всегда ready» — для каркаса
-  без зависимостей это нормально.
+- `/healthz` — liveness: процесс жив, зависимости не проверяются, ответ 200.
+  Когда появится зависимость, добавь отдельный readiness-роут, если он нужен.
 - `/metrics` — Prometheus. Если метрики не должны быть публичными, вынеси
   их на отдельный admin-порт или закрой на ingress. Один общий mux — самый
   простой вариант, но не всегда безопасный.
@@ -648,7 +632,7 @@ readiness включены.
 - [ ] `router.go` получает готовые обработчики, а не создаёт их.
 - [ ] Router работает без бизнес-контроллеров: `HandlerSet` пустой.
 - [ ] Публичные и защищённые группы разделены.
-- [ ] Health/readiness, metrics и docs подключены осознанно.
+- [ ] `/healthz`, `/metrics`, `/docs/` подключены осознанно.
 - [ ] Пути канонические, без переписывания URL в middleware.
 - [ ] Есть тесты на `Config`, `NewServer` и маршруты.
 
@@ -658,14 +642,14 @@ readiness включены.
   дефолтами.
 - `references/config.go` — `Config`, `Addr`, `withDefaults`, `Validate`.
 - `references/server.go` — `NewServer` без запуска и биндинга порта.
-- `references/router.go` — системный router: health/readiness, без
+- `references/router.go` — системный router: `/healthz`, без
   бизнес-контроллеров, заглушка для metrics/Swagger.
 - `references/swagger.go` — `configureSwagger`: blank-import `docs` и
   рантайм-настройка `Host`/`BasePath`/`Version` после `make swag`.
 - `references/config_test.go` — тесты `Addr`, `withDefaults`, `Validate` и
   применения дефолтов в `NewServer`.
-- `references/router_test.go` — health/readiness и выключенные
-  metrics/docs по умолчанию.
+- `references/router_test.go` — `/healthz` и выключенные metrics/docs по
+  умолчанию.
 
 ## Границы
 

@@ -25,11 +25,8 @@ type App struct {
 // мере появления.
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 	router := apihttp.NewRouter(apihttp.Deps{
-		Config: cfg.HTTP,
-		Log:    log,
-		// Ready == nil — каркас всегда ready. Когда появится зависимость
-		// (БД, внешний сервис), передай func(ctx) error с проверкой Ping.
-		Ready:    nil,
+		Config:   cfg.HTTP,
+		Log:      log,
 		Handlers: apihttp.HandlerSet{},
 	})
 

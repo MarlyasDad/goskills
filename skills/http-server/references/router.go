@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 
@@ -13,13 +12,11 @@ import (
 // бизнес-роутом.
 type HandlerSet struct{}
 
-// Deps — зависимости router. Ready == nil означает «всегда ready»: для
-// каркаса без зависимостей этого достаточно.
+// Deps — зависимости router.
 type Deps struct {
 	Config   Config
 	Log      *slog.Logger
 	Auth     middleware.Authenticator
-	Ready    func(context.Context) error
 	Handlers HandlerSet
 }
 
@@ -32,7 +29,7 @@ func NewRouter(d Deps) http.Handler {
 
 	mux := http.NewServeMux()
 
-	registerSystemRoutes(mux, d.Ready)
+	registerHealthRoute(mux)
 	registerOptionalRoutes(mux, d.Config)
 	// registerDocumentRoutes(mux, d) — добавить вместе с первым контроллером.
 
@@ -45,21 +42,11 @@ func NewRouter(d Deps) http.Handler {
 	)
 }
 
-// registerSystemRoutes регистрирует health/readiness всегда. Если проекту
-// нужен режим «строго две ручки», убери вызов этой функции или добавь
-// отдельный флаг; по умолчанию системные ручки включены.
-func registerSystemRoutes(mux *http.ServeMux, ready func(context.Context) error) {
+// registerHealthRoute — единственная обязательная системная ручка.
+// Когда появится зависимость, добавь сюда проверку и отдельный роут, если
+// нужен readiness.
+func registerHealthRoute(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
-		if ready != nil {
-			if err := ready(r.Context()); err != nil {
-				http.Error(w, "not ready", http.StatusServiceUnavailable)
-				return
-			}
-		}
 		w.WriteHeader(http.StatusOK)
 	})
 }

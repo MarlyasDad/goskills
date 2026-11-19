@@ -111,11 +111,8 @@ type App struct {
 
 func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 	router := apihttp.NewRouter(apihttp.Deps{
-		Config: cfg.HTTP,
-		Log:    log,
-		// nil — каркас всегда ready. Когда появится зависимость, передай
-		// func(ctx) error с проверкой Ping.
-		Ready:    nil,
+		Config:   cfg.HTTP,
+		Log:      log,
 		Handlers: apihttp.HandlerSet{},
 	})
 
@@ -135,8 +132,8 @@ func New(cfg *config.Config, log *slog.Logger) (*App, error) {
 В каркасе нет адаптеров и контроллеров, поэтому поля `cleanup` нет. Когда
 появятся БД/клиенты, создай их здесь, добавь в `App` поле
 `cleanup func() error` и `defer` в `Run`, а обработчики — в
-`apihttp.HandlerSet`. `Ready` замени на функцию, которая проверяет
-зависимости.
+`apihttp.HandlerSet`. Когда появится зависимость, добавь в `Deps` поле
+`Ready func(context.Context) error` с проверкой Ping.
 
 ## Запуск и останов
 

@@ -1,4 +1,6 @@
 ## 2026-11-19
+- http-server: системные ручки сведены к `/healthz`, `/metrics`, `/docs/`; `/readyz` удалён (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-server/composition-root: убран `Ready` из каркаса — `/readyz` всегда 200; поле добавляется вместе с первой зависимостью (Alexander Yudaev <yudaev.alex@gmail.com>)
 - composition-root: убран мёртвый `cleanup` из каркаса — поле добавляется вместе с первым внешним ресурсом (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-controllers: контракт 400 вернул отдельное поле `field`; `ValidationError.Field` обязателен, `message` содержит только текст ошибки (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/bootstrap: `@host`/`@schemes` убраны из Swagger-аннотаций; `docs.SwaggerInfo` настраивается в рантайме — host/basePath из `HTTP_SWAGGER_*`, version из `SERVICE_VERSION` (Alexander Yudaev <yudaev.alex@gmail.com>)

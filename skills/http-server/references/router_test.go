@@ -13,7 +13,7 @@ func TestNewRouter_SystemRoutes(t *testing.T) {
 
 	router := NewRouter(Deps{})
 
-	for _, path := range []string{"/healthz", "/readyz"} {
+	for _, path := range []string{"/healthz"} {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 
