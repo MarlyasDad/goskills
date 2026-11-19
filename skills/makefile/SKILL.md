@@ -45,6 +45,8 @@ metadata:
 APPS := creator api
 LOCAL_BIN := $(CURDIR)/bin
 MOCKERY_VERSION := v3.9.1
+GOOSE_VERSION := v3.30.1
+SQLC_VERSION := v1.31.1
 ```
 
 - `APPS` — список приложений модуля. Из него строятся `build-all` и `help`.
@@ -52,8 +54,8 @@ MOCKERY_VERSION := v3.9.1
   Go-инструменты: `protoc`-плагины, `mockery`, `swag`, `goose` и прочее.
   `GOBIN=$(LOCAL_BIN) go install ...` не засоряет глобальный `GOPATH`, а
   `bin/` уже в `.gitignore`.
-- `MOCKERY_VERSION` — версия mockery. Фиксируется, иначе конфиг v3 может
-  поехать после обновления.
+- `MOCKERY_VERSION`, `GOOSE_VERSION`, `SQLC_VERSION` — версии инструментов.
+  Фиксируются, иначе обновление ломает генерацию или конфиг.
 - Отдельных `APP`, `GO`, `BIN`, `ARGS` нет: приложение задаётся в имени цели,
   компилятор — `go` из `PATH`, локальный конфиг вшит в `run-<app>`.
 
@@ -66,8 +68,8 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
 .bin-deps:
 	$(info Installing binary dependencies...)
 
-	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
-	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
+	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
 ```
 

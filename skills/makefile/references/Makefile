@@ -2,6 +2,8 @@ APPS := creator api
 
 LOCAL_BIN := $(CURDIR)/bin
 MOCKERY_VERSION := v3.9.1
+GOOSE_VERSION := v3.30.1
+SQLC_VERSION := v1.31.1
 
 .DEFAULT_GOAL := help
 
@@ -55,8 +57,8 @@ mocks:
 .bin-deps:
 	$(info Installing binary dependencies...)
 
-	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
-	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION)
+	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
 	# gRPC: protoc-gen-go, protoc-gen-go-grpc
 	# HTTP: github.com/swaggo/swag/cmd/swag
