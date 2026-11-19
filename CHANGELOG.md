@@ -1,4 +1,6 @@
 ## 2026-11-19
+- http-server/http-controllers/project-structure: группы контроллеров `internal`/`external` заменены на `internalapi`/`externalapi`; `internal` — зарезервированное имя Go, пакет снаружи не импортируется (Alexander Yudaev <yudaev.alex@gmail.com>)
+- bootstrap: в `configs/.env.example` расписаны значения HTTP по умолчанию — таймауты 5s/15s/30s/60s, 1 MiB, CORS выключен, metrics/swagger false (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/makefile: версия библиотеки `swag` выровнена с `SWAG_VERSION`; `http-swagger` v1 тянет старый `swag` v1.8.1, из-за чего сгенерированный `docs.go` не собирается (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-middlewares: `Recovery` отдаёт контрактное `internal server error`, а не `http.StatusText` с `Internal Server Error`; добавлен тест тела 500 (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-controllers: `ValidationError.Field` стал `omitempty` и не заполняется в 400 — ответ соответствует контракту `{errors:[{message, code}]}`, имя поля внутри `message` (Alexander Yudaev <yudaev.alex@gmail.com>)

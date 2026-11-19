@@ -40,8 +40,13 @@ internal/transport/<appname>/http/
     └── response.go
 ```
 
-`<group>` — граница доступа (`internal`, `external`) или смысловая группа
-(`documents`, `appeals`). `<resource>` — ресурс или операция внутри группы.
+`<group>` — граница доступа (`internalapi`, `externalapi`) или смысловая
+группа (`documents`, `appeals`). `<resource>` — ресурс или операция внутри
+группы.
+
+Не называй каталог группы `internal`: в Go это зарезервированное имя, и
+пакет снаружи `.../http` не сможет его импортировать. Для внутреннего API
+используй `internalapi`, для внешнего — `externalapi`.
 
 Готовые файлы — `references/config.go`, `references/server.go`,
 `references/router.go`, `references/config_test.go` и

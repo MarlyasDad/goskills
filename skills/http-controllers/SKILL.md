@@ -37,8 +37,11 @@ internal/transport/<appname>/http/
     └── handler_test.go
 ```
 
-- `<group>` — `internal`, `external` или смысловая группа. `<resource>` —
-  ресурс: `documents`, `appeals`.
+- `<group>` — `internalapi`, `externalapi` или смысловая группа. `<resource>`
+  — ресурс: `documents`, `appeals`.
+- Не называй группу `internal`: это зарезервированное имя Go, и пакет
+  снаружи `.../http` не сможет его импортировать. Для внутреннего API —
+  `internalapi`, для внешнего — `externalapi`.
 - Пакет называется по последнему сегменту: `documents`, `appeals`. Если в
   router встречаются два `user` из разных групп, импортируй с алиасом:
   `internaluser`, `externaluser`.

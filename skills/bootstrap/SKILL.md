@@ -496,16 +496,21 @@ SERVICE_VERSION=dev
 SERVICE_ENVIRONMENT=local
 
 # HTTP-сервер (для HTTP-каркаса; подключение — skills/http-server)
+# Пусто — все интерфейсы.
 HTTP_HOST=
+# 8080; 0 — эфемерный порт для тестов.
 HTTP_PORT=8080
-# 0 — значение по умолчанию, его подставит http.NewServer
+# 0 — значение по умолчанию, его подставит http.NewServer:
+# read header — 5s, read — 15s, write — 30s, idle — 60s.
 HTTP_READ_HEADER_TIMEOUT=0s
 HTTP_READ_TIMEOUT=0s
 HTTP_WRITE_TIMEOUT=0s
 HTTP_IDLE_TIMEOUT=0s
+# 1 MiB.
 HTTP_MAX_HEADER_BYTES=1048576
-# CSV через запятую; пусто — CORS выключен
+# CSV через запятую; пусто — CORS выключен.
 HTTP_CORS_ALLOWED_ORIGINS=
+# false; на стенде можно включить.
 HTTP_METRICS=false
 HTTP_SWAGGER=false
 ```
