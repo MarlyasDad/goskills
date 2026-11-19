@@ -255,11 +255,14 @@ func Load() (*Config, error) {
 			Output:      String("LOG_OUTPUT", "stdout"),
 			ServiceName: String("SERVICE_NAME", "<appname>"),
 			Version:     String("SERVICE_VERSION", "dev"),
-			Environment: String("SERVICE_ENVIRONMENT", "local"),
+			Environment: String("SERVICE_ENVIRONMENT", ""),
 		},
 	}, nil
 }
 ```
+
+`SERVICE_ENVIRONMENT` намеренно без дефолта `local`: иначе стенд без
+переменной выглядит как локальная машина.
 
 ### internal/config/config_test.go
 

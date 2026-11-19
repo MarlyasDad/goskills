@@ -124,7 +124,7 @@ func Load() (*Config, error) {
 			Output:      String("LOG_OUTPUT", "stdout"),
 			ServiceName: String("SERVICE_NAME", "<appname>"),
 			Version:     String("SERVICE_VERSION", "dev"),
-			Environment: String("SERVICE_ENVIRONMENT", "local"),
+			Environment: String("SERVICE_ENVIRONMENT", ""),
 		},
 	}, nil
 }
@@ -154,6 +154,10 @@ LOG_OUTPUT=stdout
 `env` в логе, `APP_ENV` (если он есть) — поведение приложения. Если оба
 означают один и тот же стенд, задавайте одинаковые значения в
 `configs/.env.example`.
+
+`Environment` по умолчанию пустой, а не `local`: пустой атрибут `env`
+виден в логе и сигналит, что переменную не задали. Дефолт `local`
+замаскировал бы стенд под локальную машину.
 
 Имена переменных — плоские, без префикса приложения: настройки логов общие
 для всех приложений модуля. Правила источников и `Load()` —
