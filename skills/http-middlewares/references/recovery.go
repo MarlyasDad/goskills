@@ -42,7 +42,7 @@ func Recovery(log *slog.Logger) Middleware {
 					w,
 					http.StatusInternalServerError,
 					responses.CodeUnassigned,
-					http.StatusText(http.StatusInternalServerError),
+					"internal server error",
 				); err != nil {
 					log.ErrorContext(r.Context(), "write recovery response", "error", err)
 				}

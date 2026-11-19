@@ -394,7 +394,14 @@ func registerOptionalRoutes(_ *http.ServeMux, _ Config) {
 ```bash
 go get github.com/prometheus/client_golang/prometheus/promhttp
 go get github.com/swaggo/http-swagger
+# Версия библиотеки должна совпадать с SWAG_VERSION из Makefile:
+go get github.com/swaggo/swag@v1.16.6
 ```
+
+`http-swagger` v1 сам тянет старый `swag` v1.8.1, а CLI `swag` v1.16.6
+генерирует `LeftDelim`/`RightDelim`, которых там ещё нет — сборка падает.
+Выравнивай библиотеку `github.com/swaggo/swag` под `SWAG_VERSION` явно или
+используй `http-swagger/v2`.
 
 ```go
 import (
@@ -489,7 +496,13 @@ readiness включены.
 
    ```bash
    go get github.com/swaggo/http-swagger
+   # Та же версия, что SWAG_VERSION в Makefile:
+   go get github.com/swaggo/swag@v1.16.6
    ```
+
+   `http-swagger` v1 тянет `swag` v1.8.1; CLI v1.16.6 генерирует поля,
+   которых там нет. Версии библиотеки и CLI должны совпадать. Альтернатива —
+   `github.com/swaggo/http-swagger/v2`.
 
 2. Добавить минимальные аннотации в `cmd/<appname>/main.go`:
 

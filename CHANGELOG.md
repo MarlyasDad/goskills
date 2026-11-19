@@ -1,4 +1,6 @@
 ## 2026-11-19
+- http-server/makefile: версия библиотеки `swag` выровнена с `SWAG_VERSION`; `http-swagger` v1 тянет старый `swag` v1.8.1, из-за чего сгенерированный `docs.go` не собирается (Alexander Yudaev <yudaev.alex@gmail.com>)
+- http-middlewares: `Recovery` отдаёт контрактное `internal server error`, а не `http.StatusText` с `Internal Server Error`; добавлен тест тела 500 (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-controllers: `ValidationError.Field` стал `omitempty` и не заполняется в 400 — ответ соответствует контракту `{errors:[{message, code}]}`, имя поля внутри `message` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/bootstrap/config/makefile/project-structure: системный каркас без бизнес-контроллеров — `Load` для `http.Config`, `Bool`/`CSV`, пустой `HandlerSet`, `Port: 0`, `Ready: nil`, `swag`/`make swag`, metrics/docs за флагами (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-controllers/http-server/http-middlewares/project-structure: ответы вынесены в `http/responses/` — `RespondWithJSON`, `RespondWithText`, `RespondWithError`, `RespondWithValidationErrors`, `RespondWithFile`; конструкторы возвращают ошибку записи, вызывающий логирует; коды — из корпоративного справочника, до присвоения — `CodeUnassigned`; файл отдаётся потоком с docx MIME и `Content-Disposition` (Alexander Yudaev <yudaev.alex@gmail.com>)

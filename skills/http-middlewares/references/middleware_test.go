@@ -36,6 +36,7 @@ func TestRecovery(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.JSONEq(t, `{"errors":[{"message":"internal server error","code":0}]}`, rec.Body.String())
 	require.Contains(t, buf.String(), "panic recovered")
 	require.Contains(t, buf.String(), "http request")
 }

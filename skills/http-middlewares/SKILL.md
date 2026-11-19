@@ -314,7 +314,7 @@ func Recovery(log *slog.Logger) Middleware {
 					w,
 					http.StatusInternalServerError,
 					responses.CodeUnassigned,
-					http.StatusText(http.StatusInternalServerError),
+					"internal server error",
 				); err != nil {
 					log.ErrorContext(r.Context(), "write recovery response", "error", err)
 				}
@@ -327,6 +327,9 @@ func Recovery(log *slog.Logger) Middleware {
 ```
 
 - Стек — только в лог, не в ответ.
+- Текст 500 — контрактная строка `"internal server error"`, а не
+  `http.StatusText`: там `"Internal Server Error"`, и ответ разойдётся с
+  контрактом.
 - Recovery не глотает `http.ErrAbortHandler`.
 - Recovery должен стоять внутри Logging, иначе Logging не увидит 500.
 - Паника — не штатный способ вернуть 400. Ожидаемые ошибки идут через

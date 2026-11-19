@@ -124,7 +124,9 @@ swag:
 - `mocks` генерирует моки по `.mockery.yaml`; версия mockery фиксируется
   через `MOCKERY_VERSION`, а не `@latest`.
 - `swag` генерирует docs для `SWAG_APP`; версия фиксируется через
-  `SWAG_VERSION`, а не `@latest`.
+  `SWAG_VERSION`, а не `@latest`. Библиотека `github.com/swaggo/swag` в
+  `go.mod` должна совпадать с `SWAG_VERSION`: `http-swagger` v1 тянет старую
+  версию, и сгенерированный `docs.go` не собирается.
 - `lint` не форматирует код; форматирование — `fmt`.
 - Секреты и деплой в `Makefile` не хранятся.
 - Не делать отдельный `Makefile` в `cmd/<app>/`: цели с именем приложения
