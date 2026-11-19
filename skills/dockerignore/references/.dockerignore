@@ -1,0 +1,65 @@
+# .dockerignore — что не попадает в контекст сборки Docker.
+# Синтаксис как у .gitignore: * ? ** ! и комментарии через #.
+#
+# ВАЖНО: это не граница безопасности. Секреты не должны лежать в репозитории
+# и передаваться через ARG/ENV; для сборки используй BuildKit --secret.
+
+# --- Git и CI ---
+.git/
+.gitignore
+.gitattributes
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# --- Docker и локальная инфраструктура ---
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# --- Секреты и локальные конфиги ---
+.env
+.env.*
+configs/.env.*
+# Шаблоны без секретов можно оставить в контексте.
+!.env.example
+!configs/.env.example
+
+# --- Сборка и артефакты ---
+bin/
+dist/
+build/
+out/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# --- Логи и временные файлы ---
+*.log
+logs/
+tmp/
+.cache/
+
+# --- IDE и ОС ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- Артефакты ИИ-инструментов ---
+.agentignore
+.agentsignore
+.aiignore
+.claude/
+.cursor/
+.aider*
+.continue/

@@ -137,6 +137,7 @@ go mod init <module>
 .
 ├── go.mod
 ├── Dockerfile
+├── .dockerignore
 ├── Makefile
 ├── .mockery.yaml
 ├── README.md
@@ -197,6 +198,8 @@ go mod init <module>
   свои. Правила — `skills/makefile`.
 - `.mockery.yaml` — конфиг генератора моков; по умолчанию `mockery`.
 - `Dockerfile` — сборка образа приложения.
+- `.dockerignore` — что не попадает в контекст сборки Docker: `.git`,
+  локальные `.env`, артефакты. Правила — `skills/dockerignore`.
 - `README.md` — как запустить проект и какие переменные окружения нужны.
 - `AGENTS.md` — проектная память: модуль, приложения, команды, решения и
   отклонения. Правила — `skills/agents-md`.
@@ -418,7 +421,8 @@ go mod init <module>
 8. `internal/repository/`, `internal/infra/`,
    `internal/services/<appname>/<service>/`, `internal/transport/` — при
    появлении первого порта, операции и адаптера.
-9. `Makefile`, `Dockerfile` — когда появляются команды сборки и деплой.
+9. `Makefile`, `Dockerfile`, `.dockerignore` — когда появляются команды
+   сборки и деплой.
 10. `tests/` — при появлении первого интеграционного теста.
 
 Пустые каталоги на любом шаге не создаются.

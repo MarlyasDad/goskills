@@ -51,6 +51,7 @@ YAML frontmatter и эталонные файлы в `references/`.
 | `makefile` | цели, `.bin-deps`, workspace-Makefile |
 | `gitignore` | что не коммитить |
 | `agentignore` | что агент не читает; OpenCode — `permissions` |
+| `dockerignore` | что не попадает в контекст сборки Docker |
 | `agents-md` | проектная память и каркас `AGENTS.md` |
 | `skill-creator` | создание и правка навыков |
 | `skill-issue` | текст issue при конфликте или баге в навыках |

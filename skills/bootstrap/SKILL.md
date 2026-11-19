@@ -450,6 +450,8 @@ make build-all
 - Не создавать пустые каталоги «на будущее».
 - Не добавлять `Dockerfile`, `docker-compose.yml`, миграции и CI, пока нет
   реальной потребности.
+- Не оставлять `Dockerfile` с `COPY . .` без `.dockerignore`: контекст
+  потянет `.git` и локальные `.env`.
 - Не создавать `internal/domain`, `internal/services`, `internal/repository`,
   `internal/infra`, `internal/transport`, `tests/`, `api/` без первого файла.
 - Не добавлять сторонние зависимости в `go.mod` на старте: только stdlib и

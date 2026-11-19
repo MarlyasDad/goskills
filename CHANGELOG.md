@@ -1,4 +1,5 @@
 ## 2026-11-19
+- dockerignore: добавлен навык и эталон `.dockerignore` — контекст сборки, секреты, проверка; `.dockerignore` внесён в каркас проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-issue: добавлен навык для текста issue о конфликтах и багах в навыках; предлагает отправить автору через `gh`, без подтверждения не отправляет (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: правило о явном сообщении конфликтов навыков добавлено в скилл и шаблон `references/AGENTS.md`; новые проекты получают его из каркаса (Alexander Yudaev <yudaev.alex@gmail.com>)
 - process: в workflow добавлено явное сообщение о конфликтах между навыками; правило и чек-лист закреплены в skill-creator (Alexander Yudaev <yudaev.alex@gmail.com>)

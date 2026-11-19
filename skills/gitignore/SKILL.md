@@ -70,5 +70,6 @@ git status --ignored
 ## Границы
 
 - «Что не читает агент» — `skills/agentignore`.
+- «Что не попадает в контекст Docker» — `skills/dockerignore`.
 - «Где лежит конфиг» — `skills/project-structure`, `skills/config`.
 - «Какие команды у проекта» — `skills/makefile`.

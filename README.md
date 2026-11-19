@@ -32,7 +32,7 @@
 | Транспорт | `transport` |
 | Конфиг и тесты | `config`, `testing` |
 | Наблюдаемость | `logger` |
-| Файлы проекта | `makefile`, `gitignore`, `agentignore`, `agents-md` |
+| Файлы проекта | `makefile`, `gitignore`, `agentignore`, `dockerignore`, `agents-md` |
 | Процесс | `commit-conventions`, `changelog`, `skill-creator`, `skill-issue` |
 | Промпты | `prompt-engineering` |
 
