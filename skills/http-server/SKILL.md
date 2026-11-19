@@ -487,6 +487,8 @@ func registerDocumentRoutes(mux *http.ServeMux, d Deps) {
 - Health-ответы могут быть текстовыми; это не бизнес-API. Если проект
   требует JSON и там, используй `responses.RespondWithJSON` из
   `skills/http-controllers`.
+- Изменил набор системных ручек или их флаги — обнови `README.md`: путь,
+  назначение и env. Контракт API — в `api/`.
 
 ## Swagger
 
@@ -633,6 +635,7 @@ func registerDocumentRoutes(mux *http.ServeMux, d Deps) {
 - [ ] Router работает без бизнес-контроллеров: `HandlerSet` пустой.
 - [ ] Публичные и защищённые группы разделены.
 - [ ] `/healthz`, `/metrics`, `/docs/` подключены осознанно.
+- [ ] Новая или изменённая ручка отражена в `README.md`, контракт — в `api/`.
 - [ ] Пути канонические, без переписывания URL в middleware.
 - [ ] Есть тесты на `Config`, `NewServer` и маршруты.
 

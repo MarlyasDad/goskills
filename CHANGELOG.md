@@ -1,3 +1,6 @@
+## 2026-11-20
+- agents-md/http-server/http-controllers/makefile: `README.md` добавлен в workflow и синхронизируется с публичными ручками, env и командами; новая цель — в таблицу команд README (Alexander Yudaev <yudaev.alex@gmail.com>)
+
 ## 2026-11-19
 - http-controllers: `errors.As` заменён на `errors.AsType` (Go 1.26+); для старых версий оставлена оговорка про `errors.As` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server: системные ручки сведены к `/healthz`, `/metrics`, `/docs/`; `/readyz` удалён (Alexander Yudaev <yudaev.alex@gmail.com>)

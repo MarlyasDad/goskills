@@ -47,6 +47,8 @@ internal/transport/<appname>/http/
   `internaluser`, `externaluser`.
 - Один каталог — один ресурс или небольшая группа родственных операций.
   Не складывать все ручки приложения в один `handler.go`.
+- Новая ручка или изменение контракта → строка в `README.md` (метод, путь,
+  назначение) и контракт в `api/`.
 - Общие конструкторы ответов — `http/responses/`, рядом с
   `http/middleware/`: `RespondWithJSON`, `RespondWithText`,
   `RespondWithError`, `RespondWithValidationErrors`, `RespondWithFile`.
@@ -699,6 +701,7 @@ func TestCreate(t *testing.T) {
 - [ ] Ошибки маппятся в одном месте.
 - [ ] Наружу не уходят внутренние детали.
 - [ ] Формат ошибки един для API.
+- [ ] Ручка отражена в `README.md`, контракт — в `api/`.
 - [ ] Есть тест на успех, битый запрос и ошибку сервиса.
 
 ## Эталон
