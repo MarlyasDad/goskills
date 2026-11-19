@@ -416,8 +416,10 @@ go mod init <module>
 
 1. `go mod init <module>` — см. раздел «Инициализация проекта».
 2. Корневые файлы: `.gitignore`, `README.md`.
-3. `internal/config/config.go` + `configs/.env.example`.
-4. `internal/platform/logger/` — логгер, если он нужен с первого запуска.
+3. `internal/platform/logger/` — логгер по `skills/logger`; `internal/config`
+   будет вкладывать `logger.Config`, поэтому логгер создаётся первым.
+4. `internal/config/config.go` + `configs/.env.example` — общий `Config`,
+   `Load()` и вложенный `logger.Config`.
 5. `internal/app/<appname>/app.go` — минимальный DI и `Run(ctx)`.
 6. `cmd/<appname>/main.go` — конфиг, логгер, `app.New`, сигналы, запуск и
    останов.

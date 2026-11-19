@@ -1,4 +1,5 @@
 ## 2026-11-19
+- project-structure: порядок каркаса исправлен — логгер до конфига, потому что `internal/config` вкладывает `logger.Config` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - testing: убран раздел «Флейки» — unit-тест должен быть детерминирован; нестабильные тесты (flaky) описаны в integration/e2e (Alexander Yudaev <yudaev.alex@gmail.com>)
 - testing: навык сужен до unit-тестов; `testify`/`mockery` остаются стандартом, интеграционные и e2e вынесены отдельно (Alexander Yudaev <yudaev.alex@gmail.com>)
 - integration-testing: добавлен навык — реальные БД/брокеры, тег `integration`, контрактные наборы, по согласованию (Alexander Yudaev <yudaev.alex@gmail.com>)
