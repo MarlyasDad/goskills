@@ -24,7 +24,7 @@ metadata:
 | Проект | имя, назначение в одном абзаце |
 | Стек | язык, БД, фронтенд, инфраструктура — кратко |
 | Модуль и приложения | `module`, `<appname>`, бинарь, короткое имя модуля и причина |
-| Команды | реальные цели `Makefile`: `build-<app>`, `run-<app>`, `test`, `test-race`, `lint`, `.bin-deps` |
+| Команды | реальные цели `Makefile`: `build-<app>`, `run-<app>`, `test`, `test-race`, `lint`, `.bin-deps`; `test-integration`/`test-e2e` — если есть |
 | Workflow | уточнить → slice → артефакты → проверки → коммит по запросу → итог |
 | Конфиг | один `Config` на модуль, env в k8s, локально `configs/.env.local`, секреты |
 | Тесты | unit — `testify`/`mockery`; integration — по согласованию; e2e — тестировщики; команды |

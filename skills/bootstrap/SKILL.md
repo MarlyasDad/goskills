@@ -147,7 +147,8 @@ metadata:
    `references/main.go` и заменить `<module>`/`<appname>`. Конфиг → логгер →
    `app.New` → сигналы ОС → `Run` и останов. Адаптеры здесь не создаются.
 8. **Команды.** `Makefile` по `skills/makefile`: `build-<app>`, `run-<app>`,
-   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`.
+   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`;
+   `test-integration` и `test-e2e` — когда появятся такие тесты.
    `mockery` ставится через `.bin-deps`; `.mockery.yaml` — в корне по
    `references/.mockery.yaml`.
 9. **AGENTS.md.** По `skills/agents-md`: взять `references/AGENTS.md`,

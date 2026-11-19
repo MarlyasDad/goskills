@@ -30,6 +30,14 @@ test:
 test-race:
 	go test -race -shuffle=on -count=1 ./...
 
+# Интеграционные и e2e — раскомментировать, когда появятся тесты.
+# При включении добавить цели в .PHONY.
+# test-integration:
+# 	go test -tags=integration -count=1 ./tests/integration/...
+#
+# test-e2e:
+# 	go test -tags=e2e -count=1 ./tests/e2e/...
+
 lint:
 	go vet ./...
 

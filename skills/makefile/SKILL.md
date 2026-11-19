@@ -36,7 +36,8 @@ metadata:
 | `test-race` | `go test -race -shuffle=on -count=1 ./...` |
 | `lint` | `go vet ./...`; если есть `golangci-lint` — он |
 
-Дополнительно: `mocks`, `fmt`, `tidy`, `.bin-deps`, `clean`.
+Дополнительно: `mocks`, `fmt`, `tidy`, `.bin-deps`, `clean`;
+`test-integration` и `test-e2e` — когда появятся такие тесты.
 
 ## Переменные
 

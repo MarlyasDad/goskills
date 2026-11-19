@@ -22,6 +22,7 @@
 - `make run-<app>` — локальный запуск, `configs/.env.local`
 - `make build-all`
 - `make test`, `make test-race`, `make lint`
+- `make test-integration`, `make test-e2e` — если есть такие тесты
 - `make .bin-deps` — Go-инструменты в `bin/`
 
 ## Workflow

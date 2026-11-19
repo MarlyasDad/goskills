@@ -514,7 +514,8 @@ goskills. `bootstrap` его не пересоздаёт: приводим к к
    `Config`, `Load()`, `LoadFile()`, вложенные `logger.Config` и локальные
    `Config` адаптеров. Убрать чтение env из `main` и адаптеров.
 3. **Makefile.** Привести цели: `build-<app>`, `run-<app>`, `build-all`,
-   `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`.
+   `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`;
+   `test-integration` и `test-e2e` — когда появятся такие тесты.
    `run-<app>` передаёт `-config configs/.env.local`; версия Go — только в
    `go.mod`.
 4. **Корневые файлы.** `.gitignore`, `.agentignore`, `.dockerignore` (если
