@@ -196,7 +196,8 @@ go mod init <module>
   `run-<app>`, плюс `build-all`, `test`, `test-race`, `lint`. Бинарные
   зависимости — `.bin-deps`. Агент берёт команды отсюда, а не придумывает
   свои. Правила — `skills/makefile`.
-- `.mockery.yaml` — конфиг генератора моков; по умолчанию `mockery`.
+- `.mockery.yaml` — конфиг mockery v3; эталон —
+  `skills/bootstrap/references/.mockery.yaml`.
 - `Dockerfile` — сборка образа приложения.
 - `.dockerignore` — что не попадает в контекст сборки Docker: `.git`,
   локальные `.env`, артефакты. Правила — `skills/dockerignore`.

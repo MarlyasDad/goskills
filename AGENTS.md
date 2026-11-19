@@ -134,7 +134,7 @@ git diff --check
   `service.go`, `dto.go` и файлом на операцию (`register.go`, `unregister.go`).
 - `Makefile` один на модуль/workspace, цели с именем приложения:
   `build-<app>`, `run-<app>`; версия Go только в `go.mod`.
-- Тестовый стек по умолчанию — `mockery` + `testify`; моки генерируются.
+- Тестовый стек по умолчанию — `mockery` v3 + `testify`; моки генерируются.
 - Тесты: unit — `skills/testing`; интеграционные — `skills/integration-testing`
   по согласованию; e2e — `skills/e2e-testing`, владелец — тестировщик.
 - Логгер один на приложение: `slog` в `internal/platform/logger`, настройки —

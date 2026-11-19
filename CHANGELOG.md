@@ -1,4 +1,5 @@
 ## 2026-11-19
+- mockery: добавлен эталон `.mockery.yaml` для v3, версия зафиксирована в `Makefile` (`MOCKERY_VERSION`), добавлена цель `mocks` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - bootstrap: дерево каркаса дополнено `internal/config/file.go` и `internal/platform/logger/logger_test.go` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - project-structure: порядок каркаса исправлен — логгер до конфига, потому что `internal/config` вкладывает `logger.Config` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - testing: убран раздел «Флейки» — unit-тест должен быть детерминирован; нестабильные тесты (flaky) описаны в integration/e2e (Alexander Yudaev <yudaev.alex@gmail.com>)

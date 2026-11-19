@@ -35,7 +35,7 @@ metadata:
 | Имя модуля | Путь импорта (`module`), не имя проекта. Кандидат — из git remote: `git@github.com:org/repo.git` → `github.com/org/repo`. Спросить, будет ли проект импортироваться другими; если нет — предложить короткое имя и получить явное согласие. Без remote — `go.work` или родительский `go.mod`; иначе **спросить пользователя** |
 | Имя приложения `<appname>` | Спросить пользователя, если он не указал его явно. Выбирается по бинарю: короткое, без доменного префикса и без имени репозитория — `creator`, `api`. Это имя бинаря и одинаковый сегмент в `cmd/`, `internal/app/` и `internal/transport/` |
 | Версия Go | явно указанная пользователем; иначе `.go-version`, `toolchain` или CI-конфиг; иначе системная из `go version`. Если системная ниже `1.26` — уточнить у пользователя |
-| Тестовый стек | `mockery` + `testify` по умолчанию. `stdlib` и ручные моки — только если пользователь явно попросил. `mockery` → `.bin-deps`, `testify` → `go.mod`, `.mockery.yaml` в корень |
+| Тестовый стек | `mockery` v3 + `testify` по умолчанию. `stdlib` и ручные моки — только если пользователь явно попросил. `mockery` → `.bin-deps`, `testify` → `go.mod`, `.mockery.yaml` в корень |
 | Данные разработчика | имя и email для локального git-конфига. Спросить вместе с остальными данными; если пользователь не указал — показать текущие `git config user.name` и `git config user.email` и подтвердить |
 
 Правила:
@@ -55,7 +55,7 @@ metadata:
 - Данные разработчика записывать в **локальный** конфиг проекта, а не в
   глобальный: имя и email могут отличаться от настроек ПК. Не придумывать их:
   если пользователь не указал и git-конфиг пуст — запросить.
-- `mockery` + `testify` — тестовый стек по умолчанию, а не поздняя правка:
+- `mockery` v3 + `testify` — тестовый стек по умолчанию, а не поздняя правка:
   `mockery` идёт в `.bin-deps`, `testify` — в `go.mod`, моки генерируются,
   а не пишутся руками. `stdlib` и ручные проверки — только по явному
   запросу пользователя.
@@ -146,8 +146,9 @@ metadata:
    `references/main.go` и заменить `<module>`/`<appname>`. Конфиг → логгер →
    `app.New` → сигналы ОС → `Run` и останов. Адаптеры здесь не создаются.
 8. **Команды.** `Makefile` по `skills/makefile`: `build-<app>`, `run-<app>`,
-   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`. `mockery`
-   ставится через `.bin-deps`; `.mockery.yaml` — в корне.
+   `build-all`, `test`, `test-race`, `lint`, `help`, `.bin-deps`, `mocks`.
+   `mockery` ставится через `.bin-deps`; `.mockery.yaml` — в корне по
+   `references/.mockery.yaml`.
 9. **AGENTS.md.** По `skills/agents-md`: взять `references/AGENTS.md`,
    записать модуль, приложения, короткое имя и причину, команды, конфиг,
    тестовый стек и границы. Если файл уже есть — слить, а не перезаписать.
@@ -395,6 +396,12 @@ func (a *App) stop(ctx context.Context) error {
 `test-race`, `lint`, `help`. `run-<app>` передаёт
 `-config configs/.env.local`; `bin/` не коммитится.
 
+### .mockery.yaml
+
+Создаётся по `references/.mockery.yaml`: mockery v3, шаблон `testify`, моки
+рядом с интерфейсами. Заменить `<module>` и список пакетов; версия фиксируется
+в `Makefile` (`MOCKERY_VERSION`). Генерация — `make mocks`.
+
 ### .gitignore
 
 Создаётся по `skills/gitignore`: `skills/gitignore/references/.gitignore` →
@@ -440,7 +447,7 @@ SERVICE_ENVIRONMENT=local
 - короткое имя модуля и причину, если оно короткое;
 - команды из `Makefile`;
 - конфиг: один `Config`, env в k8s, локально `configs/.env.local`;
-- тестовый стек: `mockery` + `testify`, если не отказались явно;
+- тестовый стек: `mockery` v3 + `testify`, если не отказались явно;
 - границы: не создавать пустые каталоги, не коммитить `configs/.env.*` и
   `.env`.
 

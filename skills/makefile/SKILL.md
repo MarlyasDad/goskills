@@ -36,13 +36,14 @@ metadata:
 | `test-race` | `go test -race -shuffle=on -count=1 ./...` |
 | `lint` | `go vet ./...`; если есть `golangci-lint` — он |
 
-Дополнительно: `fmt`, `tidy`, `.bin-deps`, `clean`.
+Дополнительно: `mocks`, `fmt`, `tidy`, `.bin-deps`, `clean`.
 
 ## Переменные
 
 ```make
 APPS := creator api
 LOCAL_BIN := $(CURDIR)/bin
+MOCKERY_VERSION := v3.9.1
 ```
 
 - `APPS` — список приложений модуля. Из него строятся `build-all` и `help`.
@@ -50,6 +51,8 @@ LOCAL_BIN := $(CURDIR)/bin
   Go-инструменты: `protoc`-плагины, `mockery`, `swag`, `goose` и прочее.
   `GOBIN=$(LOCAL_BIN) go install ...` не засоряет глобальный `GOPATH`, а
   `bin/` уже в `.gitignore`.
+- `MOCKERY_VERSION` — версия mockery. Фиксируется, иначе конфиг v3 может
+  поехать после обновления.
 - Отдельных `APP`, `GO`, `BIN`, `ARGS` нет: приложение задаётся в имени цели,
   компилятор — `go` из `PATH`, локальный конфиг вшит в `run-<app>`.
 
@@ -64,11 +67,11 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
 
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@latest
 	GOBIN=$(LOCAL_BIN) go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
+	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
 ```
 
 Цель точечная (с точкой), в обычный `make` не входит. Запускается явно:
-`make .bin-deps`.
+`make .bin-deps`. Генерация моков — `make mocks` (нужен `.bin-deps`).
 
 Правило: **добавил пакет или инструмент — обнови `.bin-deps` в том же
 изменении**. Не оставляй установку «на потом».
@@ -106,6 +109,8 @@ Go-инструменты ставятся в `bin/`, а не в глобаль�
 - `test` не ходит в сеть. Интеграционные тесты — отдельная цель
   `test-integration` по `skills/integration-testing`, e2e — `test-e2e` по
   `skills/e2e-testing`.
+- `mocks` генерирует моки по `.mockery.yaml`; версия mockery фиксируется
+  через `MOCKERY_VERSION`, а не `@latest`.
 - `lint` не форматирует код; форматирование — `fmt`.
 - Секреты и деплой в `Makefile` не хранятся.
 - Не делать отдельный `Makefile` в `cmd/<app>/`: цели с именем приложения
