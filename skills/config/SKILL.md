@@ -80,6 +80,8 @@ Config**» и «**где валидировать**». Вопрос «где л�
   пустым — приложение всё равно запустится.
 - Приложений может быть несколько: каждое берёт из общего `Config` свои
   секции. Отдельных конфигов на приложение нет.
+- `Env`/`APP_ENV` не входят в каркас: без ветвлений это мёртвое поле.
+  Добавляй режим поведения, когда он действительно появится.
 
 ```go
 // internal/config/config.go — одно зеркало конфиг-файла на весь модуль
@@ -93,7 +95,6 @@ import (
 )
 
 type Config struct {
-	Env             string
 	ShutdownTimeout time.Duration
 	Postgres        postgres.Config
 }
@@ -110,7 +111,6 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Env:             String("APP_ENV", "local"),
 		ShutdownTimeout: timeout,
 		Postgres: postgres.Config{
 			DSN:      String("DB_DSN", ""),
@@ -287,8 +287,8 @@ func LoadFile(path string) error {
 
 ## Имена переменных
 
-- Плоские, верхний регистр, `_`: `APP_ENV`, `SHUTDOWN_TIMEOUT`, `DB_DSN`,
-  `KAFKA_BROKERS`.
+- Плоские, верхний регистр, `_`: `SHUTDOWN_TIMEOUT`, `DB_DSN`,
+  `KAFKA_BROKERS`, `SERVICE_ENVIRONMENT`.
 - Имя отражает подсистему, а не приложение: общий `DB_DSN` для всех
   приложений модуля. Префикс приложения (`CREATOR_DB_DSN`) — только если
   приложения работают с разными значениями в одном окружении.
@@ -325,7 +325,6 @@ DB_MAX_CONNS=10
 ```go
 // internal/config/config.go
 type Config struct {
-	Env      string
 	Postgres postgres.Config
 }
 
@@ -336,7 +335,6 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Env: String("APP_ENV", "local"),
 		Postgres: postgres.Config{
 			DSN:      String("DB_DSN", ""),
 			MaxConns: maxConns,

@@ -231,7 +231,6 @@ import (
 // Config — зеркало конфиг-файла, общее для всех приложений.
 // Локальные конфиги адаптеров и платформы добавляются сюда вложенными полями.
 type Config struct {
-	Env             string
 	ShutdownTimeout time.Duration
 	Logger          logger.Config
 }
@@ -246,10 +245,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("shutdown timeout must be positive")
 	}
 
-	env := String("APP_ENV", "local")
-
 	return &Config{
-		Env:             env,
 		ShutdownTimeout: timeout,
 		Logger: logger.Config{
 			Level:       String("LOG_LEVEL", "info"),
@@ -282,13 +278,12 @@ import (
 )
 
 func TestLoad_Defaults(t *testing.T) {
-	t.Setenv("APP_ENV", "")
 	t.Setenv("SHUTDOWN_TIMEOUT", "")
 
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Equal(t, "local", cfg.Env)
 	require.Equal(t, 10*time.Second, cfg.ShutdownTimeout)
+	require.Equal(t, "info", cfg.Logger.Level)
 }
 
 func TestLoad_RejectsInvalidShutdownTimeout(t *testing.T) {
@@ -425,8 +420,6 @@ func (a *App) stop(ctx context.Context) error {
 ### configs/.env.example
 
 ```dotenv
-# local | staging | production
-APP_ENV=local
 # Таймаут graceful shutdown
 SHUTDOWN_TIMEOUT=10s
 # debug | info | warn | error

@@ -108,16 +108,11 @@ func New(cfg Config) *slog.Logger {
 import "<module>/internal/platform/logger"
 
 type Config struct {
-	Env             string
-	ShutdownTimeout time.Duration
-	Logger          logger.Config
+	Logger logger.Config
 }
 
 func Load() (*Config, error) {
-	env := String("APP_ENV", "local")
-
 	return &Config{
-		Env: env,
 		Logger: logger.Config{
 			Level:       String("LOG_LEVEL", "info"),
 			Format:      String("LOG_FORMAT", "json"),
@@ -151,9 +146,8 @@ LOG_OUTPUT=stdout
 
 `SERVICE_*` — метаданные сервиса, `LOG_*` — настройки логгера. Это разные
 группы, и связывать их не нужно: `SERVICE_ENVIRONMENT` — только атрибут
-`env` в логе, `APP_ENV` (если он есть) — поведение приложения. Если оба
-означают один и тот же стенд, задавайте одинаковые значения в
-`configs/.env.example`.
+`env` в логе. Режим поведения приложения — отдельная настройка, если она
+появится; не связывай её с атрибутом лога.
 
 `Environment` по умолчанию пустой, а не `local`: пустой атрибут `env`
 виден в логе и сигналит, что переменную не задали. Дефолт `local`
@@ -162,8 +156,8 @@ LOG_OUTPUT=stdout
 ### Почему `SERVICE_ENVIRONMENT` — строка, а не enum
 
 - **Это метаданные, а не поведение.** По `env` в логе нет ветвлений;
-  `SERVICE_ENVIRONMENT` — только атрибут, `APP_ENV` — поведение приложения.
-  Типизация метаданных ничего не защищает.
+  `SERVICE_ENVIRONMENT` — только атрибут, поведение приложения — отдельная
+  настройка. Типизация метаданных ничего не защищает.
 - **Логгер не должен падать на неизвестном значении.** Enum либо
   валидируется и роняет запуск, либо молча мапится — и тогда защиты нет.
   Правило логгера: неверный уровень/формат откатывается к дефолту.

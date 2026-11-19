@@ -1,4 +1,5 @@
 ## 2026-11-19
+- bootstrap/config/logger: убрано мёртвое поле `Env`/`APP_ENV` из эталонов; в каркас не добавляется без ветвления, `SERVICE_ENVIRONMENT` остаётся отдельным атрибутом лога (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: комментарий про версии заменён на ссылку на переменные выше (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile: goose и sqlc зафиксированы переменными `GOOSE_VERSION` и `SQLC_VERSION`; `@latest` в эталоне больше нет (Alexander Yudaev <yudaev.alex@gmail.com>)
 - project-structure/config/bootstrap: `internal/config/file.go` всегда входит в каркас; в k8s `-config` пустой, `LoadFile` — no-op (Alexander Yudaev <yudaev.alex@gmail.com>)
