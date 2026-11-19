@@ -260,7 +260,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 ## Тесты
 
 Готовый пример — `references/logger_test.go`. Проверяется поведение, а не
-внутренности:
+внутренности; исключение — чистые функции и тестовые швы:
 
 - `parseLevel` — все уровни, регистр, `warning`, неизвестное значение;
 - JSON содержит `service`, `version`, `env`, `msg` и атрибуты события;
@@ -270,7 +270,9 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 - неизвестный формат даёт JSON, неизвестный уровень — `info`.
 
 Тест пишет в `bytes.Buffer` через `newLogger`, не перехватывает `os.Stdout`
-и не зависит от env. Правила тестов — `skills/testing`.
+и не зависит от env. `parseLevel` — чистая функция, `newLogger` — шов с
+подменой writer; их тесты не нарушают правило про внутренности
+(`skills/testing`).
 
 ## Добавить настройку логгера
 
