@@ -107,6 +107,10 @@ type Config struct {
 	AllowedOrigins    []string
 	Metrics           bool
 	Swagger           bool
+	// SwaggerHost пустой — Swagger UI берёт текущий origin.
+	SwaggerHost string
+	// SwaggerBasePath по умолчанию "/".
+	SwaggerBasePath string
 }
 
 // Addr собирает адрес через net.JoinHostPort: это корректно и для IPv6.
@@ -231,6 +235,8 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("HTTP_SWAGGER: %w", err)
 	}
+	swaggerHost := String("HTTP_SWAGGER_HOST", "")
+	swaggerBasePath := String("HTTP_SWAGGER_BASE_PATH", "/")
 
 	return &Config{
 		ShutdownTimeout: shutdownTimeout,
@@ -245,6 +251,8 @@ func Load() (*Config, error) {
 			AllowedOrigins:    CSV("HTTP_CORS_ALLOWED_ORIGINS"),
 			Metrics:           metrics,
 			Swagger:           swagger,
+			SwaggerHost:       swaggerHost,
+			SwaggerBasePath:   swaggerBasePath,
 		},
 	}, nil
 }
@@ -252,10 +260,14 @@ func Load() (*Config, error) {
 
 - Дефолты: `HTTP_HOST=""`, `HTTP_PORT=8080`, таймауты `0` (их заменит
   `NewServer`), `HTTP_MAX_HEADER_BYTES=1 MiB`, `HTTP_METRICS=false`,
-  `HTTP_SWAGGER=false`.
+  `HTTP_SWAGGER=false`, `HTTP_SWAGGER_HOST=""`,
+  `HTTP_SWAGGER_BASE_PATH="/"`.
 - `HTTP_CORS_ALLOWED_ORIGINS` — CSV через запятую; пустое значение выключает
   CORS. Разбор — `CSV`, без `strings.Split` по месту.
 - `HTTP_METRICS` и `HTTP_SWAGGER` — `Bool`, без `strconv.ParseBool` по месту.
+- `HTTP_SWAGGER_HOST` — пусто означает «текущий origin». Публичный хост
+  задаётся отдельной env, а не хардкодом в аннотациях.
+- `HTTP_SWAGGER_BASE_PATH` — по умолчанию `/`.
 - Проект стартует без единой HTTP-переменной: порт и остальное имеют
   дефолты.
 
@@ -515,13 +527,16 @@ readiness включены.
    // @title <appname> API
    // @version 1.0
    // @description HTTP API
-   // @host localhost:8080
    // @BasePath /
-   // @schemes http
    func main() {
        // ...
    }
    ```
+
+   Не хардкодь `@host` и `@schemes`: на другом стенде в docs останется
+   `localhost`. Swagger UI берёт текущий origin; если нужен публичный хост,
+   задай `HTTP_SWAGGER_HOST`. `@version` — только дефолт для `make swag`,
+   в рантайме версия переопределяется из `SERVICE_VERSION`.
 
 3. Установить `swag` через `.bin-deps` и сгенерировать docs:
 
@@ -539,18 +554,29 @@ readiness включены.
      --parseDependency --parseInternal
    ```
 
-4. После первой генерации добавить blank-import, чтобы `docs.SwaggerInfo`
-   заполнился:
+4. После первой генерации добавить `swagger.go` с blank-import и
+   рантайм-настройкой `docs.SwaggerInfo`:
 
    ```go
-   // cmd/<appname>/swagger.go
+   // cmd/<appname>/swagger.go — добавить после первого `make swag`.
    package main
 
-   import _ "<module>/internal/transport/<appname>/http/docs"
+   import (
+       appconfig "<module>/internal/config"
+       docs "<module>/internal/transport/<appname>/http/docs"
+   )
+
+   func configureSwagger(cfg *appconfig.Config) {
+       docs.SwaggerInfo.Host = cfg.HTTP.SwaggerHost
+       docs.SwaggerInfo.BasePath = cfg.HTTP.SwaggerBasePath
+       docs.SwaggerInfo.Version = cfg.Logger.Version
+   }
    ```
 
-   Отдельный файл нужен, чтобы каркас собирался до первого `make swag`.
-   Если docs уже сгенерированы, можно импортировать прямо в `main.go`.
+   В `run` после `config.Load()` добавить `configureSwagger(cfg)`. Файл
+   нельзя добавлять до генерации: импорт несуществующего пакета ломает
+   сборку. В каркасе `SERVICE_VERSION` лежит в `Logger.Version`; если проект
+   вынес версию в отдельное поле — используй его.
 
 Правила:
 
@@ -558,6 +584,10 @@ readiness включены.
   в пакете, который его использует. В `api/` только ручные контракты
   (`openapi.yaml`, `*.proto`).
 - `docs.go`, `swagger.json`, `swagger.yaml` не правятся руками.
+- `docs.SwaggerInfo` настраивается в рантайме: `Host` — из
+  `HTTP_SWAGGER_HOST` (пусто = текущий origin), `BasePath` — из
+  `HTTP_SWAGGER_BASE_PATH`, `Version` — из `SERVICE_VERSION`. Аннотации —
+  только дефолт для генерации.
 - `make swag` использует `SWAG_APP` (по умолчанию первое приложение из
   `APPS`); для другого приложения — `make swag SWAG_APP=api`.
 - Флаг `HTTP_SWAGGER` включает `/docs/`; на проде обычно `false`.
@@ -630,8 +660,8 @@ readiness включены.
 - `references/server.go` — `NewServer` без запуска и биндинга порта.
 - `references/router.go` — системный router: health/readiness, без
   бизнес-контроллеров, заглушка для metrics/Swagger.
-- `references/swagger.go` — blank-import сгенерированного пакета `docs`
-  после `make swag`.
+- `references/swagger.go` — `configureSwagger`: blank-import `docs` и
+  рантайм-настройка `Host`/`BasePath`/`Version` после `make swag`.
 - `references/config_test.go` — тесты `Addr`, `withDefaults`, `Validate` и
   применения дефолтов в `NewServer`.
 - `references/router_test.go` — health/readiness и выключенные

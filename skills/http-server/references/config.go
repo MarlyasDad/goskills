@@ -30,6 +30,10 @@ type Config struct {
 	AllowedOrigins    []string
 	Metrics           bool
 	Swagger           bool
+	// SwaggerHost пустой — Swagger UI берёт текущий origin.
+	SwaggerHost string
+	// SwaggerBasePath по умолчанию "/".
+	SwaggerBasePath string
 }
 
 // Addr собирает адрес через net.JoinHostPort: это корректно и для IPv6.

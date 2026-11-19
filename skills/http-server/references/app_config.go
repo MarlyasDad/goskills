@@ -60,6 +60,8 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("HTTP_SWAGGER: %w", err)
 	}
+	swaggerHost := String("HTTP_SWAGGER_HOST", "")
+	swaggerBasePath := String("HTTP_SWAGGER_BASE_PATH", "/")
 
 	return &Config{
 		ShutdownTimeout: shutdownTimeout,
@@ -82,6 +84,8 @@ func Load() (*Config, error) {
 			AllowedOrigins:    CSV("HTTP_CORS_ALLOWED_ORIGINS"),
 			Metrics:           metrics,
 			Swagger:           swagger,
+			SwaggerHost:       swaggerHost,
+			SwaggerBasePath:   swaggerBasePath,
 		},
 	}, nil
 }

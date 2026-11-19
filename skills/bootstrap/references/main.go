@@ -17,9 +17,7 @@ import (
 // @title <appname> API
 // @version 1.0
 // @description HTTP API
-// @host localhost:8080
 // @BasePath /
-// @schemes http
 func main() {
 	configPath := flag.String("config", "", "path to config file (local run)")
 	flag.Parse()

@@ -510,6 +510,9 @@ HTTP_IDLE_TIMEOUT=0s
 HTTP_MAX_HEADER_BYTES=1048576
 # CSV через запятую; пусто — CORS выключен.
 HTTP_CORS_ALLOWED_ORIGINS=
+# Пусто — Swagger UI берёт текущий origin; публичный хост — отдельная env.
+HTTP_SWAGGER_HOST=
+HTTP_SWAGGER_BASE_PATH=/
 # false; на стенде можно включить.
 HTTP_METRICS=false
 HTTP_SWAGGER=false
