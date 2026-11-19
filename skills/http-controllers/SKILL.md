@@ -267,8 +267,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(dst); err != nil {
-		var maxErr *http.MaxBytesError
-		if errors.As(err, &maxErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return errBodyTooLarge
 		}
 		return err
@@ -347,6 +346,8 @@ func publicMessage(status int) string {
 
 - `http.MaxBytesReader` обязателен: без лимита клиент пришлёт гигабайт.
   Превышение — `*http.MaxBytesError` и код 413, а не 400.
+- Пример использует `errors.AsType` из Go 1.26+. Если проект на более
+  старой версии, замени на `errors.As` с временной переменной.
 - `DisallowUnknownFields` — по умолчанию для API. Если нужна
   совместимость с лишними полями, отключи осознанно.
 - Проверка второго JSON-объекта (`dec.Decode(&struct{}{})` и `io.EOF`)

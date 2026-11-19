@@ -1,4 +1,5 @@
 ## 2026-11-19
+- http-controllers: `errors.As` заменён на `errors.AsType` (Go 1.26+); для старых версий оставлена оговорка про `errors.As` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server: системные ручки сведены к `/healthz`, `/metrics`, `/docs/`; `/readyz` удалён (Alexander Yudaev <yudaev.alex@gmail.com>)
 - http-server/composition-root: убран `Ready` из каркаса — `/readyz` всегда 200; поле добавляется вместе с первой зависимостью (Alexander Yudaev <yudaev.alex@gmail.com>)
 - composition-root: убран мёртвый `cleanup` из каркаса — поле добавляется вместе с первым внешним ресурсом (Alexander Yudaev <yudaev.alex@gmail.com>)
