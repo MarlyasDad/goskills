@@ -62,9 +62,12 @@
 - зависимости — `skills/architecture`
 - конфиг — `skills/config`
 - тесты — `skills/testing`
+- логгер — `skills/logger`
 - `Makefile` — `skills/makefile`
 - `.gitignore` — `skills/gitignore`
 - `.agentignore` — `skills/agentignore`
+- `.dockerignore` — `skills/dockerignore`
+- issue о навыках — `skills/skill-issue`
 
 ## Безопасность
 

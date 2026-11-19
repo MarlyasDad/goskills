@@ -1,4 +1,6 @@
 ## 2026-11-19
+- process: при добавлении навыка обязали синхронизировать таблицы README/AGENTS.md и шаблон agents-md; причина — пропущенные logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)
+- agents-md: в шаблон `references/AGENTS.md` добавлены ссылки на logger, dockerignore и skill-issue (Alexander Yudaev <yudaev.alex@gmail.com>)
 - dockerignore: добавлен навык и эталон `.dockerignore` — контекст сборки, секреты, проверка; `.dockerignore` внесён в каркас проекта (Alexander Yudaev <yudaev.alex@gmail.com>)
 - skill-issue: добавлен навык для текста issue о конфликтах и багах в навыках; предлагает отправить автору через `gh`, без подтверждения не отправляет (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md: правило о явном сообщении конфликтов навыков добавлено в скилл и шаблон `references/AGENTS.md`; новые проекты получают его из каркаса (Alexander Yudaev <yudaev.alex@gmail.com>)
