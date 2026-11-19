@@ -62,6 +62,20 @@ git status --ignored
 4. `git add .` и глазами проверить `git status`: в индексе не должно быть
    `.env.*`, `bin/`, IDE-файлов.
 
+## Переименование каталога
+
+Пути в `.gitignore` привязаны к именам. После `config/` → `configs/` или
+любого другого переименования проверка обязательна:
+
+```bash
+git check-ignore -v configs/.env.local    # правило должно найтись
+git check-ignore -v configs/.env.example  # вывода быть не должно
+```
+
+Иначе `.env.local` окажется вне ignore и попадёт в `git add .`. Если файл
+уже был в индексе, ignore его не уберёт: `git rm --cached <file>` и сменить
+секрет.
+
 ## Эталон
 
 Готовый файл — `references/.gitignore`. Скопировать в корень проекта и
