@@ -122,8 +122,8 @@ metadata:
    `go` в `go.mod` соответствует выбранной версии и не ниже `1.26`.
    Зависимости на этом шаге не добавлять. Если модуль короткий (не
    импортируется) — зафиксировать причину в `README.md` или `AGENTS.md`.
-3. **Корневые файлы.** `.gitignore`, `.agentignore`, `README.md`,
-   `configs/.env.example`.
+3. **Корневые файлы.** `.gitignore`, `.agentignore`, `README.md` (из
+   `references/README.md`), `configs/.env.example`.
    При коротком имени модуля — записать причину выбора в `README.md`.
 4. **Платформа.** `internal/platform/logger/` — создание логгера по
    `skills/logger`: `references/logger.go` и `references/logger_test.go`
@@ -520,8 +520,13 @@ HTTP_SWAGGER=false
 
 ### README.md
 
+Готовый шаблон — `references/README.md`. Скопировать в корень и заменить
+`<Project>`, `<app>`, `<version>`.
+
 Минимум: назначение проекта, требования (Go), запуск (`make run-<app>`),
-переменные окружения со ссылкой на `configs/.env.example`, команды `make`.
+переменные окружения со ссылкой на `configs/.env.example`, таблица команд
+`make` и раздел `HTTP API` — даже пустой, чтобы первая ручка сразу легла на
+место. Контракт API — в `api/`, README фиксирует метод, путь и назначение.
 
 ### AGENTS.md
 

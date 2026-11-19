@@ -1,4 +1,5 @@
 ## 2026-11-20
+- bootstrap/project-structure: добавлен шаблон `references/README.md` с таблицей команд и разделом `HTTP API`; минимум README в каркасе теперь включает место для первой ручки (Alexander Yudaev <yudaev.alex@gmail.com>)
 - agents-md/http-server/http-controllers/makefile: `README.md` добавлен в workflow и синхронизируется с публичными ручками, env и командами; новая цель — в таблицу команд README (Alexander Yudaev <yudaev.alex@gmail.com>)
 
 ## 2026-11-19
