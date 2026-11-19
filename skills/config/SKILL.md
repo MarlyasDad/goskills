@@ -282,6 +282,8 @@ func LoadFile(path string) error {
 ```
 
 Готовый файл — `references/file.go`; скопировать в `internal/config/file.go`.
+Файл входит в каркас всегда: в k8s `-config` пустой, и `LoadFile` ничего не
+делает.
 
 ## Имена переменных
 

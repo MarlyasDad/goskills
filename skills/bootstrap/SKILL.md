@@ -135,7 +135,8 @@ metadata:
    дублируются.
    `config_test.go` — дефолты и ошибка на неверном значении.
    `internal/config/file.go` — по `skills/config/references/file.go`:
-   локальный env-файл по `-config`, пустой путь ничего не делает.
+   входит в каркас всегда, загружает env-файл по `-config`, пустой путь
+   ничего не делает.
    По умолчанию — `go get github.com/stretchr/testify`, тест конфига
    пишется на `require`. `stdlib` без testify — только по явному запросу.
    Правила источников, композиции и валидации — `skills/config`.

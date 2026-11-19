@@ -291,7 +291,8 @@ go mod init <module>
 
 - Один пакет на модуль, без деления на `<appname>`.
 - `config.go` — общий `Config` и `Load()`; `env.go` — чтение env; `file.go` —
-  локальный файл по флагу `-config` (добавляется, когда нужен запуск вне k8s).
+  загрузка env-файла по флагу `-config`. Входит в каркас всегда: пустой путь —
+  no-op, поэтому в k8s он не мешает.
 - Источники, композиция, валидация и секреты — `skills/config`.
 
 ### internal/shared/
@@ -419,8 +420,8 @@ go mod init <module>
 2. Корневые файлы: `.gitignore`, `README.md`.
 3. `internal/platform/logger/` — логгер по `skills/logger`; `internal/config`
    будет вкладывать `logger.Config`, поэтому логгер создаётся первым.
-4. `internal/config/config.go` + `configs/.env.example` — общий `Config`,
-   `Load()` и вложенный `logger.Config`.
+4. `internal/config/config.go`, `env.go`, `file.go` + `configs/.env.example` —
+   общий `Config`, `Load()` и загрузка локального env-файла.
 5. `internal/app/<appname>/app.go` — минимальный DI и `Run(ctx)`.
 6. `cmd/<appname>/main.go` — конфиг, логгер, `app.New`, сигналы, запуск и
    останов.
