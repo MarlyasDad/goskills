@@ -54,10 +54,14 @@ metadata:
 3. Проверить, что шаблон конфига не попал под ignore:
 
 ```bash
-git check-ignore -v configs/.env.example   # пусто — файл коммитится
-git check-ignore -v configs/.env.local       # правило найдено — локальный скрыт
+git check-ignore -q configs/.env.local;   echo "local:   $?"  # 0 — игнорируется
+git check-ignore -q configs/.env.example; echo "example: $?"  # 1 — не игнорируется
 git status --ignored
 ```
+
+`-q` — проверка кодом возврата: `0` — файл игнорируется, `1` — не
+игнорируется, `128` — ошибка. `-v` оставь для отладки: он показывает
+правило, но для уже отслеживаемого файла нужен `--no-index`.
 
 4. `git add .` и глазами проверить `git status`: в индексе не должно быть
    `.env.*`, `bin/`, IDE-файлов.
@@ -68,9 +72,14 @@ git status --ignored
 любого другого переименования проверка обязательна:
 
 ```bash
-git check-ignore -v configs/.env.local    # правило должно найтись
-git check-ignore -v configs/.env.example  # вывода быть не должно
+git check-ignore -q configs/.env.local;   echo $?   # 0 — игнорируется
+git check-ignore -q configs/.env.example; echo $?   # 1 — не игнорируется
 ```
+
+`-v` здесь не годится как проверка: на негативном правиле
+`!configs/.env.example` он может напечатать правило и вернуть `0`, хотя файл
+не игнорируется. Для отладки — `git check-ignore -v --no-index <file>`:
+`--no-index` показывает правило и для уже отслеживаемого файла.
 
 Иначе `.env.local` окажется вне ignore и попадёт в `git add .`. Если файл
 уже был в индексе, ignore его не уберёт: `git rm --cached <file>` и сменить

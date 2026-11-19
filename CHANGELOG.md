@@ -1,4 +1,5 @@
 ## 2026-11-19
+- gitignore: проверка ignore через `-q` и коды возврата; `-v`/`--no-index` — только для отладки, чтобы негативное правило не выглядело как игнорирование (Alexander Yudaev <yudaev.alex@gmail.com>)
 - gitignore: после переименования каталога обязательна проверка `git check-ignore` для `configs/.env.local` и `configs/.env.example`; случай `config/` → `configs/` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - project-structure: в проверку приведения добавлены `make mocks` и `make test-race` (Alexander Yudaev <yudaev.alex@gmail.com>)
 - project-structure: уточнено, что `module` — только префикс импортов, а `<appname>` — короткое имя бинаря; длинный module не удлиняет каталоги (Alexander Yudaev <yudaev.alex@gmail.com>)
