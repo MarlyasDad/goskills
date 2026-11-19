@@ -1,4 +1,5 @@
 ## 2026-11-19
+- logger: объяснено, почему `SERVICE_ENVIRONMENT` остаётся строкой, а не enum — метаданные, открытый набор стендов, логгер не падает (Alexander Yudaev <yudaev.alex@gmail.com>)
 - makefile/bootstrap/agents-md: синхронизированы цели `test-integration` и `test-e2e`; в эталоне Makefile они закомментированы до появления тестов (Alexander Yudaev <yudaev.alex@gmail.com>)
 - logger: `SERVICE_ENVIRONMENT` по умолчанию пустой, а не `local`; стенд без переменной больше не выглядит локальным (Alexander Yudaev <yudaev.alex@gmail.com>)
 - gitignore: проверка ignore через `-q` и коды возврата; `-v`/`--no-index` — только для отладки, чтобы негативное правило не выглядело как игнорирование (Alexander Yudaev <yudaev.alex@gmail.com>)
